@@ -144,7 +144,7 @@ async function afficherMatchsReels(token) {
 
   try {
     const url = new URL(`${projectUrl}/rest/v1/matches`);
-    url.searchParams.set('select', 'title,starts_at,venue,capacity,price_cents');
+    url.searchParams.set('select', 'id,title,starts_at,venue,capacity,price_cents,reservations(status)');
     url.searchParams.set('starts_at', `gte.${new Date().toISOString()}`);
     url.searchParams.set('order', 'starts_at.asc');
     const response = await fetch(url, {
@@ -180,9 +180,61 @@ async function afficherMatchsReels(token) {
       const details = document.createElement('span');
       details.textContent = `${date.format(new Date(match.starts_at))} · ${match.venue} · ${match.capacity} places au total · ${price.format(match.price_cents / 100)}`;
       row.append(title, details);
+      ajouterBoutonReservation(row, match, token);
+
       list.append(row);
     }
   } catch {
     list.textContent = 'Impossible de charger les matchs. Réessaie après avoir actualisé la page.';
   }
+}
+
+function ajouterBoutonReservation(row, match, token) {
+  const button = document.createElement('button');
+  button.type = 'button';
+  button.className = 'btn';
+  const feedback = document.createElement('span');
+  feedback.setAttribute('role', 'status');
+
+  function afficherStatut(status) {
+    button.disabled = true;
+    button.textContent = status === 'confirmed' ? 'Place réservée' : 'En liste d’attente';
+  }
+
+  const reservation = match.reservations?.[0];
+  if (reservation) {
+    afficherStatut(reservation.status);
+  } else {
+    button.textContent = 'Je prends ma place';
+  }
+
+  button.addEventListener('click', async () => {
+    button.disabled = true;
+    feedback.textContent = 'Réservation en cours…';
+    try {
+      const response = await fetch(`${projectUrl}/rest/v1/rpc/reserver_match`, {
+        method: 'POST',
+        headers: {
+          apikey: SUPABASE_KEY,
+          Authorization: `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ p_match_id: match.id })
+      });
+      const status = await response.json();
+      if (response.ok && (status === 'confirmed' || status === 'waitlist')) {
+        afficherStatut(status);
+        feedback.textContent = '';
+        return;
+      }
+      feedback.textContent = response.status === 401
+        ? 'Actualise la page et reconnecte-toi.'
+        : (status?.message || `Réservation refusée (${response.status}).`);
+    } catch {
+      feedback.textContent = 'Réservation non confirmée. Recharge la page pour vérifier ton statut.';
+    }
+    button.disabled = false;
+  });
+
+  row.append(button, feedback);
 }
