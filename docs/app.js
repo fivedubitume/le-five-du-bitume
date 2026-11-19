@@ -49,12 +49,8 @@ function rankings() {
   }).filter(r=>r.games>=5 && !excluded(r.p)).sort((a,b)=>b.average-a.average);
 }
 function home() {
-  const next = state.matches.filter(m => timestamp(m.date) > now() && !m.result).sort((a,b)=>a.date.localeCompare(b.date))[0];
-  const top = rankings().slice(0,3);
   return `<section class="hero hero-five hero-photo"><div class="hero-photo-colonne"><div class="hero-photo-cadre"><img class="hero-photo-joueurs" src="joueurs-bitume.webp" alt="Deux joueurs du Five du Bitume en action sur un terrain indoor" width="1672" height="941" fetchpriority="high"></div><div class="hero-five-intro"><p class="tag">Football à 5 · Wittenheim</p><h1>LE FIVE DU BITUME</h1><p id="prochain-five">Chargement du prochain Five…</p><div class="actions"><a class="btn" href="joueur.html">Je prends ma place</a> <a class="btn alt" href="joueur.html?retrait=1">Je retire ma place</a></div></div></div><div id="accueil-feuille"></div></section>
-  <div class="grid"><section class="card" id="vote-five"><h2>Vote pour l’homme du match</h2></section>
-  <section class="card"><p class="tag">Saison en cours</p><h2>Les mieux classés</h2>${top.map(({p,average})=>rosterRow(p,average.toFixed(1))).join('')}<div class="actions"><a class="btn alt" href="#classement">Voir le classement</a></div></section>
-  <section class="card"><p class="tag">La trêve</p><h2>Tournois et challenges</h2><p class="muted">Inscris ton équipe et retrouve les résultats du groupe.</p><div class="actions"><a class="btn alt" href="#tournois">Voir les tournois</a></div></section></div>`;
+  <section class="card regles-groupe" id="regles-du-groupe"><h2>Règles du groupe</h2><p class="muted">Les règles seront publiées ici.</p></section>`;
 }
 function summary(m) {
   if (m.open) return '<p class="muted">Votes en cours</p>';
@@ -92,11 +88,33 @@ function admin() {
   <div class="grid">${state.matches.map(m=>`<section class="card"><h2>${esc(m.title)}</h2><details><summary>Modifier le match</summary><form class="section" data-form="match" data-id="${m.id}">${matchFields(m)}<button class="btn">Enregistrer</button></form></details><form class="section" data-form="presence" data-id="${m.id}"><h3>Feuille de présence</h3>${m.entries.map(id=>`<label>${esc(player(id).name)}<select name="presence_${id}">${[['','À renseigner'],['present','À l’heure'],['late','En retard'],['noShow','Absent sans prévenir']].map(([value,name])=>`<option value="${value}" ${(m.presence[id]??'')===value?'selected':''}>${name}</option>`).join('')}</select></label>`).join('')}${field('result','Score',m.result,'text','maxlength="35"')}<label>Votes<select name="open"><option value="0">Fermés</option><option value="1" ${m.open?'selected':''}>Ouverts</option></select></label><button class="btn">Valider la feuille</button></form></section>`).join('')}</div>
   <div class="grid">${state.cups.map(c=>`<form class="card" data-form="cup" data-id="${c.id}"><h2>${esc(c.title)}</h2>${field('title','Nom',c.title,'text','required maxlength="60"')}${field('date','Date',c.date,'date','required')}${field('format','Format',c.format,'text','required maxlength="60"')}<label>Vainqueur<select name="result"><option value="">À désigner</option>${c.teams.map(t=>`<option ${c.result===t?'selected':''}>${esc(t)}</option>`).join('')}</select></label><button class="btn">Enregistrer</button></form>`).join('')}</div>`;
 }
+function afficherClassements(categorie) {
+  const criteres = [
+    { id: 'victoires', nom: 'Victoires', attente: 'Les victoires apparaîtront après la publication des résultats.' },
+    { id: 'homme-du-match', nom: 'Homme du match', attente: 'Le classement apparaîtra après la publication des premiers titres.' },
+    { id: 'moyenne', nom: 'Note moyenne', attente: 'Les moyennes apparaîtront quand les notes des joueurs seront disponibles.' }
+  ];
+  const actif = criteres.find(critere => critere.id === categorie) ?? criteres[0];
+  const liens = criteres.map(critere =>
+    `<a class="btn ${critere === actif ? '' : 'alt'}" href="#classements/${critere.id}"${critere === actif ? ' aria-current="page"' : ''}>${critere.nom}</a>`
+  ).join('');
+  return `<h1>Classements</h1><div class="actions">${liens}</div><section class="card"><h2>${actif.nom}</h2><p class="muted">${actif.attente}</p></section>`;
+}
+
 function render() {
-  const [page,id]=location.hash.slice(1).split('/');
-  document.querySelectorAll('nav a').forEach(a=>a.toggleAttribute('aria-current',a.hash==='#'+(page||'accueil')));
-  const pages={accueil:home,tournois:cups,profil:profile,admin,votes,classement:()=>`<h1>Classement</h1><section class="card section"><p class="muted">À partir de 5 matchs évalués.</p>${rankings().map(({p,average,games},i)=>rosterRow({...p,position:`${i+1}. ${p.position} · ${games} matchs`},average.toFixed(1)+' / 10')).join('')}</section><h2 class="section">Cartes joueurs</h2><section class="card">${state.players.filter(p=>!excluded(p)).map(p=>rosterRow(p)).join('')}</section>`};
-  app.innerHTML=(Object.hasOwn(pages,page)?pages[page]:home)(id);
+  const [route, categorie] = location.hash.slice(1).split('/');
+  const pages = {
+    accueil: home,
+    classements: afficherClassements,
+    vote: () => '<section class="card" id="vote-five"><h1>Vote pour l’homme du match</h1></section>',
+    cartons: () => '<h1>Cartons par jour</h1><section class="card"><p class="muted">Les cartons seront affichés par date de match.</p></section>'
+  };
+  const page = Object.hasOwn(pages, route) ? route : 'accueil';
+  document.querySelectorAll('header nav a').forEach(lien => {
+    if (lien.hash === '#' + page) lien.setAttribute('aria-current', 'page');
+    else lien.removeAttribute('aria-current');
+  });
+  app.innerHTML = pages[page](categorie);
 }
 function commit(message) {
   try { localStorage.setItem('five-wittenheim-v1',JSON.stringify(state)); status.textContent=message; }

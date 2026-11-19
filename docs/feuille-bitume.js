@@ -78,13 +78,6 @@ async function chargerFeuille() {
     liste.className = 'feuille-maillots';
     match.joueurs.forEach((joueur, index) => liste.append(creerMaillot(joueur, catalogue, index + 1, cadrages)));
     if (match.joueurs.length) feuille.append(liste);
-    if (match.joueurs.some(joueur => joueur.equipe)) {
-      const source = document.createElement('a');
-      source.className = 'feuille-source';
-      source.href = 'https://www.footylogos.com/football-kits';
-      source.textContent = 'Visuels FootyLogos';
-      feuille.append(source);
-    }
     conteneur.replaceChildren(feuille);
   } catch {
     if (demande === demandeFeuille && conteneur.isConnected) {

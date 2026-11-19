@@ -129,3 +129,15 @@
   .hero-photo .feuille-joueur strong { font-size: .7rem; }
   .hero-photo .feuille-numero { margin-top: 0; font-size: .65rem; }
 }
+
+.regles-groupe {
+  margin-top: 14px;
+}
+
+@media (max-width: 650px) {
+  .hero-photo-colonne::before { aspect-ratio: 2.65; }
+  .hero-photo .feuille-maillots { row-gap: 5px; }
+  .hero-photo .feuille-visuel { height: 42px; margin-bottom: 4px; }
+  .regles-groupe { margin-top: 9px; padding: 10px; }
+  .regles-groupe h2 { margin: 0; font-size: 1.15rem; }
+}
