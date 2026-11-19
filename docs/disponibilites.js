@@ -41,3 +41,8 @@ if (document.querySelector('#app')) {
     if (document.visibilityState === 'visible') afficherProchainFive();
   }, 30000);
 }
+
+if (document.querySelector('#app') && 'BroadcastChannel' in window) {
+  const canalAccueil = new BroadcastChannel('bitume-matchs');
+  canalAccueil.addEventListener('message', afficherProchainFive);
+}

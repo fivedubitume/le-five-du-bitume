@@ -35,6 +35,7 @@ form.addEventListener('submit', async event => {
     }
 
     const [profile] = await profileResponse.json();
+    roleConnecte = profile?.role;
     if (profile) afficherMatchsReels(token);
 
     if (profile?.role === "admin") afficherCreationMatch(token);
@@ -190,53 +191,77 @@ async function afficherMatchsReels(token) {
   }
 }
 
+
+let roleConnecte;
+
 function ajouterBoutonReservation(row, match, token) {
-  const button = document.createElement('button');
-  button.type = 'button';
-  button.className = 'btn';
+  const statut = match.reservations?.[0]?.status;
   const feedback = document.createElement('span');
   feedback.setAttribute('role', 'status');
+  const boutons = [];
 
-  function afficherStatut(status) {
-    button.disabled = true;
-    button.textContent = status === 'confirmed' ? 'Place réservée' : 'En liste d’attente';
-  }
+  function ajouterAction(texte, action, confirmation) {
+    const bouton = document.createElement('button');
+    bouton.type = 'button';
+    bouton.className = action === 'reserver_match' ? 'btn' : 'btn alt';
+    bouton.textContent = texte;
+    boutons.push(bouton);
 
-  const reservation = match.reservations?.[0];
-  if (reservation) {
-    afficherStatut(reservation.status);
-  } else {
-    button.textContent = 'Je prends ma place';
-  }
+    bouton.addEventListener('click', async () => {
+      if (confirmation && window.confirm(confirmation) === false) return;
+      boutons.forEach(item => { item.disabled = true; });
+      feedback.textContent = 'Mise à jour en cours…';
 
-  button.addEventListener('click', async () => {
-    button.disabled = true;
-    feedback.textContent = 'Réservation en cours…';
-    try {
-      const response = await fetch(`${projectUrl}/rest/v1/rpc/reserver_match`, {
-        method: 'POST',
-        headers: {
-          apikey: SUPABASE_KEY,
-          Authorization: `Bearer ${token}`,
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({ p_match_id: match.id })
-      });
-      const status = await response.json();
-      if (response.ok && (status === 'confirmed' || status === 'waitlist')) {
-        afficherStatut(status);
-        afficherMatchsReels(token);
-        feedback.textContent = '';
-        return;
+      try {
+        const response = await fetch(`${projectUrl}/rest/v1/rpc/${action}`, {
+          method: 'POST',
+          headers: {
+            apikey: SUPABASE_KEY,
+            Authorization: `Bearer ${token}`,
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({ p_match_id: match.id })
+        });
+
+        if (response.ok) {
+          await afficherMatchsReels(token);
+          if ('BroadcastChannel' in window) {
+            const canal = new BroadcastChannel('bitume-matchs');
+            canal.postMessage('actualiser');
+            canal.close();
+          }
+          return;
+        }
+
+        const erreur = await response.json().catch(() => null);
+        feedback.textContent = erreur?.message || `Action refusée (${response.status}).`;
+      } catch {
+        feedback.textContent = 'Action non confirmée. Actualise la page pour vérifier le résultat.';
+      } finally {
+        boutons.forEach(item => { item.disabled = false; });
       }
-      feedback.textContent = response.status === 401
-        ? 'Actualise la page et reconnecte-toi.'
-        : (status?.message || `Réservation refusée (${response.status}).`);
-    } catch {
-      feedback.textContent = 'Réservation non confirmée. Recharge la page pour vérifier ton statut.';
-    }
-    button.disabled = false;
-  });
+    });
 
-  row.append(button, feedback);
+    row.append(bouton);
+  }
+
+  if (statut === 'confirmed') {
+    row.append(document.createTextNode('Place réservée'));
+    ajouterAction('Libérer ma place', 'liberer_match');
+  } else if (statut === 'waitlist') {
+    row.append(document.createTextNode('En liste d’attente'));
+    ajouterAction('Quitter la liste d’attente', 'liberer_match');
+  } else {
+    ajouterAction('Je prends ma place', 'reserver_match');
+  }
+
+  if (roleConnecte === 'admin') {
+    ajouterAction(
+      'Supprimer le match',
+      'supprimer_match',
+      `Supprimer « ${match.title} » et toutes ses inscriptions ?`
+    );
+  }
+
+  row.append(feedback);
 }
