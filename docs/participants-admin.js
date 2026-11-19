@@ -39,7 +39,7 @@ function ajouterParticipantsAdmin(ligne, match, token) {
         const bouton = document.createElement('button');
         bouton.type = 'button';
         bouton.className = 'btn alt';
-        bouton.textContent = 'Retirer du match';
+        bouton.textContent = 'Retirer de ce match';
         const retour = document.createElement('span');
         retour.setAttribute('role', 'status');
 
@@ -79,7 +79,7 @@ function ajouterBlocageNumero(entree, participant, appeler, token) {
   const bouton = document.createElement('button');
   bouton.type = 'button';
   bouton.className = 'btn alt';
-  bouton.textContent = 'Bloquer ce numéro';
+  bouton.textContent = 'Retirer définitivement';
   const retour = document.createElement('span');
   retour.setAttribute('role', 'status');
   entree.append(bouton, retour);

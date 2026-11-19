@@ -26,6 +26,7 @@ function demarrerJoueur() {
   let profil = null;
   let ficheBloquee = false;
   let selection = null;
+  let liberationValidee = false;
 
   async function lireProfil() {
     const { data: { session }, error } = await client.auth.getSession();
@@ -44,20 +45,18 @@ function demarrerJoueur() {
 
   function ouvrirFormulaire(match) {
     selection = match;
+    liberationValidee = false;
     const statut = match.reservations?.[0]?.status;
-    inscription.elements.prenom.value = profil?.first_name || '';
-    inscription.elements.telephone.value = profil?.phone || '';
-    inscription.elements.prenom.readOnly = Boolean(profil);
-    inscription.elements.telephone.readOnly = Boolean(profil);
-    valider.textContent = statut
-      ? (statut === 'confirmed' ? 'Libérer ma place' : 'Quitter la liste d’attente')
-      : 'Confirmer mon inscription';
-    message.textContent = statut === 'confirmed' ? 'Tu es déjà inscrit à ce match.'
-      : statut === 'waitlist' ? 'Tu es déjà en liste d’attente.' : 'Renseigne tes coordonnées pour réserver.';
+    inscription.reset();
+
+
+
+    valider.textContent = "Vérifier mon inscription";
+    message.textContent = "Renseigne ton prénom et ton numéro.";
     section.hidden = true;
     inscription.hidden = false;
-    if (profil === null) inscription.elements.prenom.focus();
-    else valider.focus();
+    inscription.elements.prenom.focus();
+
   }
 
   async function chargerMatchs() {
@@ -91,7 +90,7 @@ function demarrerJoueur() {
       const bouton = document.createElement('button');
       bouton.type = 'button';
       bouton.className = 'btn';
-      bouton.textContent = statut ? 'Gérer ma place' : 'Je prends ma place';
+      bouton.textContent = "Je prends ma place";
       bouton.addEventListener('click', () => ouvrirFormulaire(match));
       ligne.append(infos, bouton);
       liste.append(ligne);
@@ -111,6 +110,23 @@ function demarrerJoueur() {
     if (selection === null) return;
     const match = selection;
     const statut = match.reservations?.[0]?.status;
+    if (profil) {
+      let numero = inscription.elements.telephone.value.replace(/[\s.()-]/g, "");
+      if (/^0[1-9][0-9]{8}$/.test(numero)) numero = "+33" + numero.slice(1);
+      else if (numero.startsWith("00")) numero = "+" + numero.slice(2);
+      if (numero !== profil.phone) {
+        message.textContent = "Ce numéro ne correspond pas à ta fiche.";
+        return;
+      }
+    }
+    if (statut && liberationValidee === false) {
+      liberationValidee = true;
+      message.textContent = statut === "confirmed"
+        ? "Tu es déjà inscrit à ce match." : "Tu es déjà en liste d’attente.";
+      valider.textContent = statut === "confirmed"
+        ? "Libérer ma place" : "Quitter la liste d’attente";
+      return;
+    }
     let actionTerminee = false;
     valider.disabled = true;
     boutonFermer.disabled = true;
@@ -134,8 +150,8 @@ function demarrerJoueur() {
         if (erreurProfil) throw erreurProfil;
         profil = await lireProfil();
         if (profil === null) throw new Error('Fiche joueur introuvable.');
-        inscription.elements.prenom.readOnly = true;
-        inscription.elements.telephone.readOnly = true;
+
+
       }
 
       const { data, error } = await client.rpc(

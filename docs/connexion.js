@@ -39,6 +39,7 @@ form.addEventListener('submit', async event => {
     if (profile) afficherMatchsReels(token);
 
     if (profile?.role === "admin") afficherCreationMatch(token);
+    if (profile?.role === "admin") afficherRetraitsAdmin(token);
     result.textContent = profile
       ? `Connexion réussie · ${profile.first_name} · rôle : ${profile.role}`
       : 'Connexion réussie, mais aucun profil associé à ce compte.';
