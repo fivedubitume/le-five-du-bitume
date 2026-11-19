@@ -23,6 +23,38 @@ function demarrerJoueur() {
     dateStyle: 'full', timeStyle: 'short', timeZone: 'Europe/Paris'
   });
   const prix = new Intl.NumberFormat('fr-FR', { style: 'currency', currency: 'EUR' });
+  const choixMaillot = inscription.querySelector('#choix-maillot');
+  const champEquipe = inscription.elements.equipe;
+  const suggestions = inscription.querySelector('#suggestions-maillots');
+  let equipeChoisie = null;
+  champEquipe.addEventListener('input', async () => {
+    equipeChoisie = null;
+    const saisie = champEquipe.value;
+    suggestions.replaceChildren();
+    if (saisie.trim().length < 2) return;
+    try {
+      const equipes = await catalogueMaillots.charger();
+      if (champEquipe.value !== saisie || choixMaillot.hidden) return;
+      const resultats = catalogueMaillots.chercher(equipes, saisie);
+      if (!resultats.length) suggestions.textContent = 'Aucun maillot trouvé. Le maillot du Bitume sera utilisé.';
+      for (const equipe of resultats) {
+        const bouton = document.createElement('button');
+        bouton.type = 'button';
+        bouton.className = 'btn alt';
+        bouton.textContent = equipe.label;
+        bouton.addEventListener('click', () => {
+          equipeChoisie = equipe;
+          champEquipe.value = equipe.label;
+          suggestions.replaceChildren();
+          champEquipe.focus();
+        });
+        suggestions.append(bouton);
+      }
+    } catch {
+      suggestions.textContent = 'Catalogue indisponible. Tu peux quand même réserver.';
+    }
+  });
+
   let profil = null;
   let ficheBloquee = false;
   let selection = null;
@@ -47,8 +79,11 @@ function demarrerJoueur() {
   function ouvrirFormulaire(match) {
     selection = match;
     liberationValidee = false;
-    const statut = match.reservations?.[0]?.status;
     inscription.reset();
+    equipeChoisie = null;
+    suggestions.replaceChildren();
+    choixMaillot.hidden = retraitDirect;
+    choixMaillot.disabled = retraitDirect;
     inscription.elements.prenom.value = "";
     inscription.elements.telephone.value = "";
     inscription.elements.prenom.readOnly = false;
@@ -185,10 +220,15 @@ function demarrerJoueur() {
 
       }
 
-      const { data, error } = await client.rpc(
-        statut ? 'liberer_match' : 'reserver_match', { p_match_id: match.id }
-      );
-      if (error) throw error;
+      const reservation = statut
+        ? await client.rpc('liberer_match', { p_match_id: match.id })
+        : await client.rpc('reserver_five_avec_maillot', {
+          p_match_id: match.id,
+          p_equipe: equipeChoisie?.id ?? null,
+          p_numero: inscription.elements.numero_maillot.valueAsNumber || null
+        });
+      if (reservation.error) throw reservation.error;
+      const { data } = reservation;
       actionTerminee = true;
       retraitDirect = false;
 

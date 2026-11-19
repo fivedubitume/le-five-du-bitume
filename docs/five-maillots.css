@@ -1,0 +1,24 @@
+.hero.hero-five { display: grid; grid-template-columns: minmax(0, 1.15fr) minmax(0, 1fr); gap: clamp(18px, 4vw, 52px); align-items: center; padding: clamp(20px, 4vw, 56px); }
+.hero-five-intro h1 { font-size: clamp(2.45rem, 5vw, 5.5rem); }
+#accueil-feuille:empty { display: none; }
+.feuille-panneau { background: #101713ef; border: 1px solid #566957; border-radius: 18px; padding: clamp(13px, 2vw, 24px); }
+.feuille-entete { display: flex; align-items: center; gap: 12px; }
+.feuille-entete img { width: 42px; height: 42px; object-fit: contain; }
+.feuille-entete h2 { font-size: clamp(1.15rem, 2vw, 1.6rem); margin: 0; }
+.feuille-entete p { margin: 4px 0 0; color: #c8d5c7; font-size: .88rem; }
+.feuille-maillots { list-style: none; padding: 0; margin: 18px 0 0; display: grid; grid-template-columns: repeat(auto-fit, minmax(68px, 1fr)); gap: 14px 8px; }
+.feuille-joueur { min-width: 0; text-align: center; }
+.feuille-visuel { position: relative; margin: 0 auto 10px; max-width: 100px; height: 76px; isolation: isolate; }
+.feuille-visuel::after { content: ""; position: absolute; z-index: -1; width: 64%; height: 8px; bottom: -4px; left: 18%; border-radius: 50%; background: #000; filter: blur(4px); }
+.feuille-visuel img { width: 100%; height: 100%; object-fit: contain; }
+.feuille-joueur strong { display: block; color: #f1d28b; text-shadow: 0 2px 2px #080803; overflow-wrap: anywhere; font-size: .86rem; }
+.feuille-numero { color: #c1cabe; font-size: .72rem; }
+#choix-maillot { border: 1px solid #566957; border-radius: 10px; margin: 16px 0; padding: 12px; }
+#suggestions-maillots { display: flex; flex-wrap: wrap; gap: 8px; }
+@media (max-width: 760px) {
+  .hero.hero-five { grid-template-columns: minmax(0, 1fr); }
+}
+.feuille-bitume-visuel { display: grid; place-items: center; }
+.feuille-bitume-visuel::before { content: ""; position: absolute; inset: 0 4px; z-index: -1; background: linear-gradient(135deg, #57ac39, #17251c 25%, #1f3629 73%, #78ae3e); clip-path: polygon(25% 0,37% 0,43% 10%,57% 10%,63% 0,75% 0,100% 24%,87% 45%,74% 36%,74% 100%,26% 100%,26% 36%,13% 45%,0 24%); }
+.feuille-bitume-visuel img { width: 27px; height: 27px; }
+.feuille-source { display: inline-block; margin-top: 12px; color: #b9c8b9; font-size: .72rem; }

@@ -8,7 +8,7 @@
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.89.0/dist/umd/supabase.js" defer></script>
   <script src="supabase-config.js" defer></script>
   <script src="disponibilites.js" defer></script>
-  <script src="joueur.js" defer></script>
+  <link rel="stylesheet" href="five-maillots.css"><script src="maillots.js" defer></script><script src="joueur.js" defer></script>
 </head>
 <body>
   <main class="wrap" id="espace-joueur">
@@ -22,6 +22,16 @@
       <label>Ton numéro WhatsApp
         <input name="telephone" type="tel" autocomplete="tel" maxlength="25" required>
       </label>
+      <fieldset id="choix-maillot">
+        <legend>Ton maillot préféré (facultatif)</legend>
+        <label>Club ou sélection
+          <input name="equipe" maxlength="80" placeholder="Ex. OM, Real Madrid, Algérie" autocomplete="off" aria-controls="suggestions-maillots">
+        </label>
+        <div id="suggestions-maillots"></div>
+        <label>Numéro préféré
+          <input name="numero_maillot" type="number" min="1" max="99" step="1">
+        </label>
+      </fieldset>
       <p>Seul l’administrateur voit ton numéro. Aucun message automatique.</p>
       <button class="btn">Accéder aux matchs</button>
     </form>

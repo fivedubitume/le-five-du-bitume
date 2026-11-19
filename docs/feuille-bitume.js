@@ -1,77 +1,91 @@
-const feuille = document.createElement('section');
-feuille.id = 'feuille-bitume';
-feuille.className = 'wrap card';
-feuille.innerHTML = `
-  <div class="feuille-entete">
-    <img src="logo.PNG" alt="">
-    <div><h2>Feuille de match</h2><p id="feuille-info"></p></div>
-  </div>
-  <div class="maillots" id="feuille-maillots"></div>
-`;
-document.querySelector('#app').after(feuille);
-
-const feuilleInfo = feuille.querySelector('#feuille-info');
-const maillots = feuille.querySelector('#feuille-maillots');
 const clientFeuille = window.supabase?.createClient(
   new URL(urlDisponibilites).origin, SUPABASE_KEY,
   { auth: { storageKey: 'bitume-session-joueur' } }
 );
+let demandeFeuille = 0;
+
+function creerMaillot(joueur, catalogue) {
+  const article = document.createElement('li');
+  article.className = 'feuille-joueur';
+  const equipe = catalogue.find(item => item.id === joueur.equipe);
+  const visuel = document.createElement('div');
+  visuel.className = 'feuille-visuel';
+  if (equipe) {
+    const image = document.createElement('img');
+    image.alt = `Maillot domicile · ${equipe.label}`;
+    image.loading = 'lazy';
+    image.referrerPolicy = 'no-referrer';
+    image.addEventListener('error', () => afficherMaillotBitume(visuel), { once: true });
+    image.src = equipe.image;
+    visuel.append(image);
+  } else {
+    afficherMaillotBitume(visuel);
+  }
+  const nom = document.createElement('strong');
+  nom.textContent = joueur.prenom;
+  article.append(visuel, nom);
+  if (joueur.numero !== null && joueur.numero !== undefined) {
+    const numero = document.createElement('span');
+    numero.className = 'feuille-numero';
+    numero.textContent = `N° ${joueur.numero}`;
+    article.append(numero);
+  }
+  return article;
+}
+
+function afficherMaillotBitume(visuel) {
+  const logo = document.createElement('img');
+  logo.src = 'logo.PNG';
+  logo.alt = 'Maillot du Bitume';
+  visuel.classList.add('feuille-bitume-visuel');
+  visuel.replaceChildren(logo);
+}
 
 async function chargerFeuille() {
-  if (document.visibilityState === 'hidden') return;
+  const conteneur = document.querySelector('#accueil-feuille');
+  if (!conteneur || document.visibilityState === 'hidden') return;
+  const demande = ++demandeFeuille;
   try {
-    if (clientFeuille === undefined) throw new Error('Supabase indisponible');
-    const { data: { session }, error: erreurSession } = await clientFeuille.auth.getSession();
-    if (erreurSession) throw erreurSession;
-    if (session === null) {
-      maillots.replaceChildren();
-      feuilleInfo.textContent = 'Ouvre l’espace joueur pour voir les inscrits.';
-      return;
-    }
-
-    const { data, error } = await clientFeuille.rpc('feuille_prochain_five');
+    if (!clientFeuille) throw new Error('Supabase indisponible');
+    const { data: matchs, error } = await clientFeuille.rpc('feuille_maillots_five');
     if (error) throw error;
-    const match = data[0];
-    maillots.replaceChildren();
-    if (match === undefined) {
-      feuilleInfo.textContent = 'Aucune feuille de match disponible.';
+    const match = matchs[0];
+    if (!match) {
+      conteneur.replaceChildren();
       return;
     }
-
-    const date = new Intl.DateTimeFormat('fr-FR', {
-      dateStyle: 'full', timeStyle: 'short', timeZone: 'Europe/Paris'
-    });
-    feuilleInfo.textContent =
-      `${date.format(new Date(match.starts_at))} · ${match.prenoms.length}/${match.capacity} inscrits`;
-
-    for (let place = 0; place < match.capacity; place += 1) {
-      const prenom = match.prenoms[place];
-      const maillot = document.createElement('div');
-      maillot.className = prenom ? 'maillot' : 'maillot libre';
-      const nom = document.createElement('strong');
-      nom.textContent = prenom || 'Disponible';
-      maillot.append(nom);
-      maillots.append(maillot);
+    const catalogue = await catalogueMaillots.charger().catch(() => []);
+    if (demande !== demandeFeuille || !conteneur.isConnected) return;
+    const feuille = document.createElement('section');
+    feuille.className = 'feuille-panneau';
+    feuille.setAttribute('aria-label', 'Feuille de match');
+    feuille.innerHTML = '<div class="feuille-entete"><img src="logo.PNG" alt=""><div><h2>Feuille de match</h2><p></p></div></div>';
+    feuille.querySelector('p').textContent = `${match.joueurs.length}/${match.capacity} inscrits`;
+    const liste = document.createElement('ul');
+    liste.className = 'feuille-maillots';
+    for (const joueur of match.joueurs) liste.append(creerMaillot(joueur, catalogue));
+    if (match.joueurs.length) feuille.append(liste);
+    if (match.joueurs.some(joueur => joueur.equipe)) {
+      const source = document.createElement('a');
+      source.className = 'feuille-source';
+      source.href = 'https://www.footylogos.com/football-kits';
+      source.textContent = 'Visuels FootyLogos';
+      feuille.append(source);
     }
+    conteneur.replaceChildren(feuille);
   } catch {
-    maillots.replaceChildren();
-    feuilleInfo.textContent = 'Feuille de match temporairement indisponible.';
+    if (demande === demandeFeuille && conteneur.isConnected) {
+      conteneur.textContent = 'Feuille de match temporairement indisponible.';
+    }
   }
 }
 
-function afficherFeuilleAccueil() {
-  feuille.hidden = location.hash !== '' && location.hash !== '#accueil';
-  if (feuille.hidden === false) chargerFeuille();
+for (const evenement of ['pageshow', 'focus', 'hashchange']) {
+  window.addEventListener(evenement, chargerFeuille);
 }
-
-window.addEventListener('pageshow', afficherFeuilleAccueil);
-window.addEventListener('focus', afficherFeuilleAccueil);
-window.addEventListener('hashchange', afficherFeuilleAccueil);
-setInterval(() => {
-  if (feuille.hidden === false) chargerFeuille();
-}, 30000);
-
+setInterval(chargerFeuille, 30000);
 if ('BroadcastChannel' in window) {
   const canalFeuille = new BroadcastChannel('bitume-matchs');
-  canalFeuille.addEventListener('message', afficherFeuilleAccueil);
+  canalFeuille.addEventListener('message', chargerFeuille);
 }
+chargerFeuille();
