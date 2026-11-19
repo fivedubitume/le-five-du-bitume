@@ -112,19 +112,18 @@ function demarrerJoueur() {
     event.preventDefault();
     if (selection === null) return;
     const match = selection;
-    let numero = inscription.elements.telephone.value.trim().replace(/[\s.()-]/g, "");
-    if (/^0[1-9][0-9]{8}.test(numero)) numero = "+33" + numero.slice(1);
-    else if (numero.startsWith("00")) numero = "+" + numero.slice(2);
-
-    const numeroDifferent = Boolean(profil && numero !== profil.phone);
-    if (retraitDirect && numeroDifferent) {
-      message.textContent = "Ce numéro ne correspond pas à ta réservation.";
-      return;
+    const statut = match.reservations?.[0]?.status;
+    if (profil) {
+      let numero = inscription.elements.telephone.value.replace(/[\s.()-]/g, "");
+      if (/^0[1-9][0-9]{8}$/.test(numero)) numero = "+33" + numero.slice(1);
+      else if (numero.startsWith("00")) numero = "+" + numero.slice(2);
+      if (numero !== profil.phone) {
+        message.textContent = "Ce numéro ne correspond pas à ta fiche.";
+        return;
+      }
     }
-
-    const statut = numeroDifferent ? undefined : match.reservations?.[0]?.status;
     if (retraitDirect) {
-      if (profil === null || numeroDifferent) {
+      if (profil === null) {
         message.textContent = "Ouvre la page dans le navigateur utilisé pour réserver.";
         return;
       }
@@ -157,10 +156,9 @@ function demarrerJoueur() {
         const champs = new FormData(inscription);
         const { data: { session }, error } = await client.auth.getSession();
         if (error) throw error;
-        if (session === null || ficheBloquee || numeroDifferent) {
+        if (session === null || ficheBloquee) {
           const { error: erreurConnexion } = await client.auth.signInAnonymously();
           if (erreurConnexion) throw erreurConnexion;
-          profil = null;
           ficheBloquee = false;
         }
 
@@ -204,7 +202,7 @@ function demarrerJoueur() {
 
   (async () => {
     profil = await lireProfil();
-    message.textContent = "";
+    message.textContent = profil ? `Bienvenue ${profil.first_name}.` : '';
     await chargerMatchs();
     if (retraitDirect) liste.querySelector("button")?.click();
   })().catch(erreur => {
