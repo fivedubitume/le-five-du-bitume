@@ -35,6 +35,8 @@ form.addEventListener('submit', async event => {
     }
 
     const [profile] = await profileResponse.json();
+    if (profile) afficherMatchsReels(token);
+
     if (profile?.role === "admin") afficherCreationMatch(token);
     result.textContent = profile
       ? `Connexion réussie · ${profile.first_name} · rôle : ${profile.role}`
@@ -111,6 +113,8 @@ function afficherCreationMatch(token) {
       if (response.ok) {
         feedback.textContent = 'Match enregistré dans Supabase.';
         matchForm.elements.starts_at.value = '';
+        afficherMatchsReels(token);
+
       } else if (response.status === 401) {
         feedback.textContent = 'Actualise la page et reconnecte-toi.';
       } else {
@@ -124,4 +128,61 @@ function afficherCreationMatch(token) {
   });
 
   result.after(section);
+}
+
+async function afficherMatchsReels(token) {
+  let section = document.querySelector('#matchs-reels');
+  if (section === null) {
+    section = document.createElement('section');
+    section.id = 'matchs-reels';
+    section.className = 'card section';
+    result.after(section);
+  }
+
+  section.innerHTML = '<h2>Matchs à venir</h2><div aria-live="polite">Chargement…</div>';
+  const list = section.querySelector('div');
+
+  try {
+    const url = new URL(`${projectUrl}/rest/v1/matches`);
+    url.searchParams.set('select', 'title,starts_at,venue,capacity,price_cents');
+    url.searchParams.set('starts_at', `gte.${new Date().toISOString()}`);
+    url.searchParams.set('order', 'starts_at.asc');
+    const response = await fetch(url, {
+      headers: { apikey: SUPABASE_KEY, Authorization: `Bearer ${token}` }
+    });
+
+    if (response.ok === false) {
+      list.textContent = response.status === 401
+        ? 'Session expirée. Actualise la page et reconnecte-toi.'
+        : `Chargement impossible (${response.status}).`;
+      return;
+    }
+
+    const matches = await response.json();
+    if (matches.length === 0) {
+      list.textContent = 'Aucun match à venir.';
+      return;
+    }
+
+    const date = new Intl.DateTimeFormat('fr-FR', {
+      dateStyle: 'full', timeStyle: 'short', timeZone: 'Europe/Paris'
+    });
+    const price = new Intl.NumberFormat('fr-FR', {
+      style: 'currency', currency: 'EUR'
+    });
+
+    list.replaceChildren();
+    for (const match of matches) {
+      const row = document.createElement('div');
+      row.className = 'row';
+      const title = document.createElement('strong');
+      title.textContent = match.title;
+      const details = document.createElement('span');
+      details.textContent = `${date.format(new Date(match.starts_at))} · ${match.venue} · ${match.capacity} places au total · ${price.format(match.price_cents / 100)}`;
+      row.append(title, details);
+      list.append(row);
+    }
+  } catch {
+    list.textContent = 'Impossible de charger les matchs. Réessaie après avoir actualisé la page.';
+  }
 }
