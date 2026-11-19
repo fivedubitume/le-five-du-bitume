@@ -1,0 +1,34 @@
+<!doctype html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Espace joueur · Le Five du Bitume</title>
+  <link rel="stylesheet" href="style.css">
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.89.0/dist/umd/supabase.js" defer></script>
+  <script src="supabase-config.js" defer></script>
+  <script src="disponibilites.js" defer></script>
+  <script src="joueur.js" defer></script>
+</head>
+<body>
+  <main class="wrap" id="espace-joueur">
+    <p><a href="index.html">Accueil</a> · <a href="connexion.html">Espace administrateur</a></p>
+    <h1>Espace joueur</h1>
+    <p id="joueur-message" role="status">Chargement…</p>
+    <form id="joueur-inscription" class="card section" hidden>
+      <label>Ton vrai prénom
+        <input name="prenom" autocomplete="given-name" maxlength="40" required>
+      </label>
+      <label>Ton numéro WhatsApp
+        <input name="telephone" type="tel" autocomplete="tel" maxlength="25" required>
+      </label>
+      <p>Seul l’administrateur voit ton numéro. Aucun message automatique.</p>
+      <button class="btn">Accéder aux matchs</button>
+    </form>
+    <section class="card section" id="joueur-matchs" hidden>
+      <h2>Matchs à venir</h2>
+      <div id="joueur-liste"></div>
+    </section>
+  </main>
+</body>
+</html>

@@ -183,6 +183,7 @@ async function afficherMatchsReels(token) {
       details.textContent = `${date.format(new Date(match.starts_at))} · ${match.venue} · ${placesParMatch.has(match.id) ? textePlaces(placesParMatch.get(match.id)) : "Places temporairement indisponibles"} · ${price.format(match.price_cents / 100)}`;
       row.append(title, details);
       ajouterBoutonReservation(row, match, token);
+      if (roleConnecte === "admin") ajouterParticipantsAdmin(row, match, token);
 
       list.append(row);
     }
