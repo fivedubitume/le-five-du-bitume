@@ -159,6 +159,7 @@ async function afficherMatchsReels(token) {
     }
 
     const matches = await response.json();
+    const placesParMatch = new Map((await lireDisponibilites().catch(() => [])).map(m => [m.id, m.places_restantes]));
     if (matches.length === 0) {
       list.textContent = 'Aucun match à venir.';
       return;
@@ -178,7 +179,7 @@ async function afficherMatchsReels(token) {
       const title = document.createElement('strong');
       title.textContent = match.title;
       const details = document.createElement('span');
-      details.textContent = `${date.format(new Date(match.starts_at))} · ${match.venue} · ${match.capacity} places au total · ${price.format(match.price_cents / 100)}`;
+      details.textContent = `${date.format(new Date(match.starts_at))} · ${match.venue} · ${placesParMatch.has(match.id) ? textePlaces(placesParMatch.get(match.id)) : "Places temporairement indisponibles"} · ${price.format(match.price_cents / 100)}`;
       row.append(title, details);
       ajouterBoutonReservation(row, match, token);
 
@@ -224,6 +225,7 @@ function ajouterBoutonReservation(row, match, token) {
       const status = await response.json();
       if (response.ok && (status === 'confirmed' || status === 'waitlist')) {
         afficherStatut(status);
+        afficherMatchsReels(token);
         feedback.textContent = '';
         return;
       }

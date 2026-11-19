@@ -51,7 +51,7 @@ function rankings() {
 function home() {
   const next = state.matches.filter(m => timestamp(m.date) > now() && !m.result).sort((a,b)=>a.date.localeCompare(b.date))[0];
   const top = rankings().slice(0,3);
-  return `<section class="hero"><div class="pitch" aria-hidden="true"></div><p class="tag">Football à 5 · Wittenheim</p><h1>LE FIVE DU BITUME</h1><p>Connecte-toi pour voir les prochains matchs et réserver ta place.</p><a class="btn" href="connexion.html">Je prends ma place</a></section>
+  return `<section class="hero"><div class="pitch" aria-hidden="true"></div><p class="tag">Football à 5 · Wittenheim</p><h1>LE FIVE DU BITUME</h1><p id="prochain-five">Chargement du prochain Five…</p><a class="btn" href="connexion.html">Je prends ma place</a></section>
   <div class="grid"><section class="card"><p class="tag">Après le match</p><h2>Résultats et votes</h2>${state.matches.filter(m=>m.result).map(m=>`<div class="row"><span>${esc(m.title)}</span><strong>${esc(m.result)}</strong></div>${canVote(m)?`<div class="actions"><a class="btn" href="#votes/${m.id}">Je note le match</a></div>`:summary(m)}`).join('')||'<p>Aucun résultat publié.</p>'}</section>
   <section class="card"><p class="tag">Saison en cours</p><h2>Les mieux classés</h2>${top.map(({p,average})=>rosterRow(p,average.toFixed(1))).join('')}<div class="actions"><a class="btn alt" href="#classement">Voir le classement</a></div></section>
   <section class="card"><p class="tag">La trêve</p><h2>Tournois et challenges</h2><p class="muted">Inscris ton équipe et retrouve les résultats du groupe.</p><div class="actions"><a class="btn alt" href="#tournois">Voir les tournois</a></div></section></div>`;
