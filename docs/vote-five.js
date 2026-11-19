@@ -43,6 +43,12 @@ function initialiserVoteFive() {
     const ouvert = !attente && secondes > 0;
     action.hidden = !ouvert || termine || !choix.hidden;
     if (!ouvert) choix.hidden = true;
+    const texteAttente = 'Le match n’a pas encore commencé. Tu pourras élire l’homme du match dès le coup d’envoi.';
+    if (attente) {
+      message.textContent = texteAttente;
+    } else if (message.textContent === texteAttente) {
+      message.textContent = '';
+    }
     if (secondes === 0) {
       compte.textContent = 'Vote terminé';
       return;
@@ -54,6 +60,10 @@ function initialiserVoteFive() {
   }
 
   async function appeler(candidat = null) {
+    const maintenant = Date.now() + decalage;
+    if (!match || maintenant < Date.parse(match.debut) || maintenant >= Date.parse(match.cloture)) {
+      throw new Error('Le vote est fermé pour ce Five.');
+    }
     const { data: { session }, error: erreurSession } = await clientVoteFive.auth.getSession();
     if (erreurSession) throw erreurSession;
     if (!session) throw new Error('Ouvre le site dans le navigateur utilisé pour réserver ta place.');
