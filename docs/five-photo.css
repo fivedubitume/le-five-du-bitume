@@ -1,0 +1,36 @@
+.hero.hero-five.hero-photo {
+  align-items: start;
+  background: #111a14;
+  padding: clamp(14px, 3vw, 32px);
+}
+
+.hero-photo-colonne {
+  min-width: 0;
+}
+
+.hero-photo-joueurs {
+  display: block;
+  width: 100%;
+  height: auto;
+  border-radius: 14px;
+}
+
+.hero-photo .hero-five-intro {
+  margin-top: 22px;
+}
+
+.hero-photo .hero-five-intro::before {
+  content: none;
+}
+
+.hero-photo-cadre {
+  overflow: hidden;
+  border-radius: 14px;
+}
+
+.hero-photo-cadre .hero-photo-joueurs {
+  width: 178.57%;
+  max-width: none;
+  border-radius: 0;
+}
+
