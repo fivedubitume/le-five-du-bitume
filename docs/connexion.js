@@ -35,6 +35,7 @@ form.addEventListener('submit', async event => {
     }
 
     const [profile] = await profileResponse.json();
+    if (profile?.role === "admin") afficherGestionAdmin(token);
     roleConnecte = profile?.role;
     if (profile) afficherMatchsReels(token);
 
