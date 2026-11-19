@@ -1,36 +1,69 @@
 .hero.hero-five.hero-photo {
-  align-items: start;
+  grid-template-columns: minmax(0, 1.24fr) minmax(0, 1fr);
+  gap: clamp(12px, 2.5vw, 28px);
+  align-items: center;
+  padding: clamp(16px, 2.5vw, 28px);
   background: #111a14;
-  padding: clamp(14px, 3vw, 32px);
 }
 
-.hero-photo-colonne {
-  min-width: 0;
+.hero-photo-cadre {
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
+}
+
+.hero-photo-cadre::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(to bottom, transparent 65%, #111a14 100%);
 }
 
 .hero-photo-joueurs {
   display: block;
   width: 100%;
   height: auto;
-  border-radius: 14px;
 }
 
-.hero-photo .hero-five-intro {
-  margin-top: 22px;
+.hero-photo-colonne {
+  min-width: 0;
+}
+
+.hero-photo-colonne::before {
+  content: "";
+  display: block;
+  aspect-ratio: 1.07;
 }
 
 .hero-photo .hero-five-intro::before {
   content: none;
 }
 
-.hero-photo-cadre {
-  overflow: hidden;
-  border-radius: 14px;
+.hero-photo .hero-five-intro h1 {
+  font-size: clamp(1.9rem, 3.4vw, 3.4rem);
 }
 
-.hero-photo-cadre .hero-photo-joueurs {
-  width: 178.57%;
-  max-width: none;
-  border-radius: 0;
+.hero-photo .feuille-panneau {
+  background: #101713c9;
+  padding: clamp(12px, 1.5vw, 19px);
 }
 
+.hero-photo .feuille-maillots {
+  grid-template-columns: repeat(auto-fit, minmax(62px, 1fr));
+  gap: 10px 7px;
+}
+
+.hero-photo .feuille-visuel {
+  height: clamp(52px, 6vw, 76px);
+}
+
+@media (max-width: 760px) {
+  .hero.hero-five.hero-photo {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .hero-photo-colonne::before {
+    aspect-ratio: 1.8;
+  }
+}
