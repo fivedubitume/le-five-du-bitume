@@ -1,0 +1,27 @@
+<!doctype html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Connexion · Le Five du Bitume</title>
+  <link rel="stylesheet" href="style.css">
+  <script src="supabase-config.js" defer></script>
+  <script src="connexion.js" defer></script>
+</head>
+<body>
+  <main class="wrap">
+    <p><a href="index.html">Accueil du Five du Bitume</a></p>
+    <h1>Connexion</h1>
+    <form id="connexion" class="card section">
+      <label>Adresse e-mail
+        <input name="email" type="email" autocomplete="username" required>
+      </label>
+      <label>Mot de passe
+        <input name="password" type="password" autocomplete="current-password" required>
+      </label>
+      <button class="btn">Se connecter</button>
+    </form>
+    <p id="resultat" class="section" role="status"></p>
+  </main>
+</body>
+</html>
