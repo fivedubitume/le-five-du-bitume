@@ -24,12 +24,18 @@ function demarrerJoueur() {
   });
   const prix = new Intl.NumberFormat('fr-FR', { style: 'currency', currency: 'EUR' });
   let profil = null;
+  let ficheBloquee = false;
   let selection = null;
 
   async function lireProfil() {
     const { data: { session }, error } = await client.auth.getSession();
     if (error) throw error;
+    ficheBloquee = false;
     if (session === null) return null;
+    const { data: bloque, error: erreurBlocage } = await client.rpc("mon_numero_est_bloque");
+    if (erreurBlocage) throw erreurBlocage;
+    ficheBloquee = bloque === true;
+    if (ficheBloquee) return null;
     const { data, error: erreurProfil } = await client.from('profiles')
       .select('first_name,phone,role').eq('id', session.user.id).maybeSingle();
     if (erreurProfil) throw erreurProfil;
@@ -115,9 +121,10 @@ function demarrerJoueur() {
         const champs = new FormData(inscription);
         const { data: { session }, error } = await client.auth.getSession();
         if (error) throw error;
-        if (session === null) {
+        if (session === null || ficheBloquee) {
           const { error: erreurConnexion } = await client.auth.signInAnonymously();
           if (erreurConnexion) throw erreurConnexion;
+          ficheBloquee = false;
         }
 
         const { error: erreurProfil } = await client.rpc('creer_profil_joueur', {
