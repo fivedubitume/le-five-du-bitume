@@ -63,11 +63,42 @@ function ajouterParticipantsAdmin(ligne, match, token) {
           }
         });
 
-        entree.append(infos, bouton, retour);
+        entree.append(infos, bouton);
+        ajouterBlocageNumero(entree, participant, appeler, token);
+        entree.append(retour);
         contenu.append(entree);
       }
     } catch (erreur) {
       contenu.textContent = erreur.message || 'Impossible de charger les participants.';
+    }
+  });
+}
+
+function ajouterBlocageNumero(entree, participant, appeler, token) {
+  if (participant.phone === null) return;
+  const bouton = document.createElement('button');
+  bouton.type = 'button';
+  bouton.className = 'btn alt';
+  bouton.textContent = 'Bloquer ce numéro';
+  const retour = document.createElement('span');
+  retour.setAttribute('role', 'status');
+  entree.append(bouton, retour);
+
+  bouton.addEventListener('click', async () => {
+    const confirmation = `Bloquer le numéro de ${participant.first_name} ? Ses inscriptions à venir seront retirées.`;
+    if (window.confirm(confirmation) === false) return;
+    bouton.disabled = true;
+    try {
+      await appeler('bloquer_numero_joueur', { p_player_id: participant.player_id });
+      if ('BroadcastChannel' in window) {
+        const canal = new BroadcastChannel('bitume-matchs');
+        canal.postMessage('actualiser');
+        canal.close();
+      }
+      await afficherMatchsReels(token);
+    } catch (erreur) {
+      retour.textContent = erreur.message || 'Blocage impossible.';
+      bouton.disabled = false;
     }
   });
 }

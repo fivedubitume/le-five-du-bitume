@@ -2,12 +2,17 @@ const inscription = document.querySelector('#joueur-inscription');
 const message = document.querySelector('#joueur-message');
 const section = document.querySelector('#joueur-matchs');
 const liste = document.querySelector('#joueur-liste');
-const boutonInscription = inscription.querySelector('button');
+const valider = inscription.querySelector('button');
+const boutonFermer = document.createElement('button');
+boutonFermer.type = 'button';
+boutonFermer.className = 'btn alt';
+boutonFermer.textContent = 'Retour aux matchs';
+inscription.append(boutonFermer);
 
 if (window.supabase) {
   demarrerJoueur();
 } else {
-  message.textContent = 'Le service de connexion ne se charge pas. Actualise la page.';
+  message.textContent = 'La connexion ne se charge pas. Actualise la page.';
 }
 
 function demarrerJoueur() {
@@ -18,121 +23,145 @@ function demarrerJoueur() {
     dateStyle: 'full', timeStyle: 'short', timeZone: 'Europe/Paris'
   });
   const prix = new Intl.NumberFormat('fr-FR', { style: 'currency', currency: 'EUR' });
+  let profil = null;
+  let selection = null;
+
+  async function lireProfil() {
+    const { data: { session }, error } = await client.auth.getSession();
+    if (error) throw error;
+    if (session === null) return null;
+    const { data, error: erreurProfil } = await client.from('profiles')
+      .select('first_name,phone,role').eq('id', session.user.id).maybeSingle();
+    if (erreurProfil) throw erreurProfil;
+    return data?.role === 'player' && data.phone ? data : null;
+  }
+
+  function ouvrirFormulaire(match) {
+    selection = match;
+    const statut = match.reservations?.[0]?.status;
+    inscription.elements.prenom.value = profil?.first_name || '';
+    inscription.elements.telephone.value = profil?.phone || '';
+    inscription.elements.prenom.readOnly = Boolean(profil);
+    inscription.elements.telephone.readOnly = Boolean(profil);
+    valider.textContent = statut
+      ? (statut === 'confirmed' ? 'Libérer ma place' : 'Quitter la liste d’attente')
+      : 'Confirmer mon inscription';
+    message.textContent = statut === 'confirmed' ? 'Tu es déjà inscrit à ce match.'
+      : statut === 'waitlist' ? 'Tu es déjà en liste d’attente.' : 'Renseigne tes coordonnées pour réserver.';
+    section.hidden = true;
+    inscription.hidden = false;
+    if (profil === null) inscription.elements.prenom.focus();
+    else valider.focus();
+  }
 
   async function chargerMatchs() {
-    const { data, error } = await client.from('matches')
-      .select('id,title,starts_at,venue,price_cents,reservations(status)')
-      .gt('starts_at', new Date().toISOString()).order('starts_at');
-    if (error) throw error;
+    const disponibilites = await lireDisponibilites(profil === null);
+    const parMatch = new Map(disponibilites.map(match => [match.id, match.places_restantes]));
+    let matchs = disponibilites;
+    if (profil) {
+      const { data, error } = await client.from('matches')
+        .select('id,title,starts_at,venue,price_cents,reservations(status)')
+        .gt('starts_at', new Date().toISOString()).order('starts_at');
+      if (error) throw error;
+      matchs = data;
+    }
 
-    const disponibilites = new Map(
-      (await lireDisponibilites().catch(() => [])).map(m => [m.id, m.places_restantes])
-    );
     liste.replaceChildren();
-    if (data.length === 0) liste.textContent = 'Aucun match à venir.';
-
-    for (const match of data) {
+    if (matchs.length === 0) liste.textContent = 'Aucun match à venir.';
+    for (const match of matchs) {
       const ligne = document.createElement('div');
       ligne.className = 'row';
       const infos = document.createElement('span');
-      infos.textContent = [
-        match.title, date.format(new Date(match.starts_at)), match.venue,
-        prix.format(match.price_cents / 100),
-        disponibilites.has(match.id)
-          ? textePlaces(disponibilites.get(match.id))
-          : 'Places temporairement indisponibles'
-      ].join(' · ');
-
       const statut = match.reservations?.[0]?.status;
+      infos.textContent = [
+        match.title || 'Prochain Five',
+        date.format(new Date(match.starts_at)),
+        match.venue,
+        typeof match.price_cents === 'number' ? prix.format(match.price_cents / 100) : '',
+        parMatch.has(match.id) ? textePlaces(parMatch.get(match.id)) : '',
+        statut === 'confirmed' ? 'Place réservée' : statut === 'waitlist' ? 'En liste d’attente' : ''
+      ].filter(Boolean).join(' · ');
+
       const bouton = document.createElement('button');
       bouton.type = 'button';
       bouton.className = 'btn';
-      bouton.textContent = statut === 'confirmed' ? 'Libérer ma place'
-        : statut === 'waitlist' ? 'Quitter la liste d’attente' : 'Je prends ma place';
-
-      bouton.addEventListener('click', async () => {
-        bouton.disabled = true;
-        message.textContent = 'Mise à jour en cours…';
-
-        try {
-          const { data: resultat, error } = await client.rpc(
-            statut ? 'liberer_match' : 'reserver_match', { p_match_id: match.id }
-          );
-          if (error) throw error;
-
-          message.textContent = statut ? 'Inscription retirée.'
-            : resultat === 'confirmed' ? 'Ta place est réservée.' : 'Tu es en liste d’attente.';
-          await chargerMatchs();
-          if ('BroadcastChannel' in window) {
-            const canal = new BroadcastChannel('bitume-matchs');
-            canal.postMessage('actualiser');
-            canal.close();
-          }
-        } catch (erreur) {
-          message.textContent = erreur.message || 'La mise à jour a échoué.';
-          bouton.disabled = false;
-        }
-      });
-
-      if (statut) {
-        const etat = document.createElement('strong');
-        etat.textContent = statut === 'confirmed' ? 'Place réservée' : 'En liste d’attente';
-        ligne.append(infos, etat, bouton);
-      } else {
-        ligne.append(infos, bouton);
-      }
+      bouton.textContent = statut ? 'Gérer ma place' : 'Je prends ma place';
+      bouton.addEventListener('click', () => ouvrirFormulaire(match));
+      ligne.append(infos, bouton);
       liste.append(ligne);
     }
     section.hidden = false;
   }
 
-  async function afficherEspace() {
-    const { data: { session }, error } = await client.auth.getSession();
-    if (error) throw error;
-    if (session) {
-      const { data: profil, error: erreurProfil } = await client.from('profiles')
-        .select('first_name,phone,role').eq('id', session.user.id).maybeSingle();
-      if (erreurProfil) throw erreurProfil;
-      if (profil?.role === 'player' && profil.phone) {
-        inscription.hidden = true;
-        message.textContent = `Bienvenue ${profil.first_name}.`;
-        await chargerMatchs();
-        return;
-      }
-    }
-    inscription.hidden = false;
+  boutonFermer.addEventListener('click', () => {
+    selection = null;
+    inscription.hidden = true;
+    section.hidden = false;
     message.textContent = '';
-  }
+  });
 
   inscription.addEventListener('submit', async event => {
     event.preventDefault();
-    boutonInscription.disabled = true;
-    message.textContent = 'Création de ta fiche…';
-    const champs = new FormData(inscription);
+    if (selection === null) return;
+    const match = selection;
+    const statut = match.reservations?.[0]?.status;
+    let actionTerminee = false;
+    valider.disabled = true;
+    boutonFermer.disabled = true;
+    message.textContent = 'Mise à jour en cours…';
 
     try {
-      const { data: { session }, error: erreurSession } = await client.auth.getSession();
-      if (erreurSession) throw erreurSession;
-      if (session === null) {
-        const { error } = await client.auth.signInAnonymously();
+      if (profil === null) {
+        const champs = new FormData(inscription);
+        const { data: { session }, error } = await client.auth.getSession();
         if (error) throw error;
+        if (session === null) {
+          const { error: erreurConnexion } = await client.auth.signInAnonymously();
+          if (erreurConnexion) throw erreurConnexion;
+        }
+
+        const { error: erreurProfil } = await client.rpc('creer_profil_joueur', {
+          p_prenom: champs.get('prenom'),
+          p_telephone: champs.get('telephone')
+        });
+        if (erreurProfil) throw erreurProfil;
+        profil = await lireProfil();
+        if (profil === null) throw new Error('Fiche joueur introuvable.');
+        inscription.elements.prenom.readOnly = true;
+        inscription.elements.telephone.readOnly = true;
       }
 
-      const { error } = await client.rpc('creer_profil_joueur', {
-        p_prenom: champs.get('prenom'),
-        p_telephone: champs.get('telephone')
-      });
+      const { data, error } = await client.rpc(
+        statut ? 'liberer_match' : 'reserver_match', { p_match_id: match.id }
+      );
       if (error) throw error;
-      inscription.reset();
-      await afficherEspace();
+      actionTerminee = true;
+
+      inscription.hidden = true;
+      selection = null;
+      message.textContent = statut ? 'Inscription retirée.'
+        : data === 'confirmed' ? 'Ta place est réservée.' : 'Tu es en liste d’attente.';
+      if ('BroadcastChannel' in window) {
+        const canal = new BroadcastChannel('bitume-matchs');
+        canal.postMessage('actualiser');
+        canal.close();
+      }
+      await chargerMatchs();
     } catch (erreur) {
-      message.textContent = erreur.message || 'Inscription impossible.';
+      message.textContent = actionTerminee
+        ? 'Action enregistrée. Actualise la page pour voir la liste à jour.'
+        : erreur.message || 'Impossible de mettre à jour ton inscription.';
     } finally {
-      boutonInscription.disabled = false;
+      valider.disabled = false;
+      boutonFermer.disabled = false;
     }
   });
 
-  afficherEspace().catch(erreur => {
-    message.textContent = erreur.message || 'Impossible d’ouvrir l’espace joueur.';
+  (async () => {
+    profil = await lireProfil();
+    message.textContent = profil ? `Bienvenue ${profil.first_name}.` : '';
+    await chargerMatchs();
+  })().catch(erreur => {
+    message.textContent = erreur.message || 'Impossible de charger les matchs.';
   });
 }
