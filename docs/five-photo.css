@@ -75,3 +75,57 @@
 .hero-photo .hero-five-intro .btn {
   text-shadow: none;
 }
+
+
+@media (max-width: 650px) {
+  header .bar { gap: 5px; padding: 7px 0; min-height: 0; }
+  header .club-logo { width: 34px; height: 34px; }
+  header nav {
+    width: 100%;
+    flex-wrap: nowrap;
+    overflow-x: auto;
+  }
+  header nav a {
+    flex: 0 0 auto;
+    white-space: nowrap;
+    font-size: .78rem;
+    padding: 6px 7px;
+  }
+
+  .hero.hero-five.hero-photo { gap: 9px; padding: 11px; }
+  .hero-photo-colonne::before { aspect-ratio: 2.4; }
+  .hero-photo .hero-five-intro .tag { font-size: .68rem; margin: 0 0 3px; }
+  .hero-photo .hero-five-intro h1 {
+    font-size: clamp(1.2rem, 6vw, 1.65rem);
+    margin: 0 0 4px;
+  }
+  .hero-photo #prochain-five { font-size: .8rem; line-height: 1.25; margin: 0; }
+  .hero-photo .actions {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 6px;
+    margin: 7px 0 0;
+  }
+  .hero-photo .actions .btn {
+    display: grid;
+    place-items: center;
+    text-align: center;
+    line-height: 1.15;
+    min-height: 44px;
+    padding: 5px 4px;
+    font-size: .76rem;
+  }
+
+  .hero-photo .feuille-panneau { padding: 9px; }
+  .hero-photo .feuille-entete { gap: 7px; }
+  .hero-photo .feuille-entete img { width: 28px; height: 28px; }
+  .hero-photo .feuille-entete p { margin: 0; font-size: .76rem; }
+  .hero-photo .feuille-maillots {
+    grid-template-columns: repeat(auto-fit, minmax(49px, 1fr));
+    gap: 7px 5px;
+    margin-top: 7px;
+  }
+  .hero-photo .feuille-visuel { height: 46px; margin-bottom: 5px; }
+  .hero-photo .feuille-joueur strong { font-size: .7rem; }
+  .hero-photo .feuille-numero { margin-top: 0; font-size: .65rem; }
+}
