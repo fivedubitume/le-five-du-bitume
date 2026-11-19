@@ -133,7 +133,7 @@ function demarrerJoueur() {
       ? undefined
       : match.reservations?.[0]?.status;
     if (retraitDirect) {
-      if (profil === null || nouveauNumeroPourReservation) {
+      if (profil === null) {
         message.textContent = "Ouvre la page dans le navigateur utilisé pour réserver.";
         return;
       }
@@ -162,7 +162,7 @@ function demarrerJoueur() {
     message.textContent = 'Mise à jour en cours…';
 
     try {
-      if (profil === null) {
+      if (profil === null || nouveauNumeroPourReservation) {
         const champs = new FormData(inscription);
         const { data: { session }, error } = await client.auth.getSession();
         if (error) throw error;
