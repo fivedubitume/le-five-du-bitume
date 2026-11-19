@@ -27,6 +27,7 @@ function demarrerJoueur() {
   let ficheBloquee = false;
   let selection = null;
   let liberationValidee = false;
+  let retraitDirect = new URLSearchParams(location.search).get("retrait") === "1";
 
   async function lireProfil() {
     const { data: { session }, error } = await client.auth.getSession();
@@ -51,7 +52,7 @@ function demarrerJoueur() {
 
 
 
-    valider.textContent = "Vérifier mon inscription";
+    valider.textContent = retraitDirect ? "Confirmer le retrait" : "Vérifier mon inscription";
     message.textContent = "Renseigne ton prénom et ton numéro.";
     section.hidden = true;
     inscription.hidden = false;
@@ -99,6 +100,8 @@ function demarrerJoueur() {
   }
 
   boutonFermer.addEventListener('click', () => {
+    retraitDirect = false;
+
     selection = null;
     inscription.hidden = true;
     section.hidden = false;
@@ -119,7 +122,23 @@ function demarrerJoueur() {
         return;
       }
     }
-    if (statut && liberationValidee === false) {
+    if (retraitDirect) {
+      if (profil === null) {
+        message.textContent = "Ouvre la page dans le navigateur utilisé pour réserver.";
+        return;
+      }
+      const prenomSaisi = inscription.elements.prenom.value.trim();
+      if (prenomSaisi.localeCompare(profil.first_name, "fr", { sensitivity: "base" }) === 0) {
+        if (statut === undefined) {
+          message.textContent = "Tu n’as pas de réservation pour ce match.";
+          return;
+        }
+      } else {
+        message.textContent = "Ce prénom ne correspond pas à ta fiche.";
+        return;
+      }
+    }
+    if (statut && liberationValidee === false && retraitDirect === false) {
       liberationValidee = true;
       message.textContent = statut === "confirmed"
         ? "Tu es déjà inscrit à ce match." : "Tu es déjà en liste d’attente.";
@@ -159,6 +178,7 @@ function demarrerJoueur() {
       );
       if (error) throw error;
       actionTerminee = true;
+      retraitDirect = false;
 
       inscription.hidden = true;
       selection = null;
@@ -184,6 +204,7 @@ function demarrerJoueur() {
     profil = await lireProfil();
     message.textContent = profil ? `Bienvenue ${profil.first_name}.` : '';
     await chargerMatchs();
+    if (retraitDirect) liste.querySelector("button")?.click();
   })().catch(erreur => {
     message.textContent = erreur.message || 'Impossible de charger les matchs.';
   });
