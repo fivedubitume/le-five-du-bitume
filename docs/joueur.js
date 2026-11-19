@@ -3,12 +3,6 @@ const message = document.querySelector('#joueur-message');
 const section = document.querySelector('#joueur-matchs');
 const liste = document.querySelector('#joueur-liste');
 const valider = inscription.querySelector('button');
-const boutonFermer = document.createElement('button');
-boutonFermer.type = 'button';
-boutonFermer.className = 'btn alt';
-boutonFermer.textContent = 'Retour aux matchs';
-inscription.append(boutonFermer);
-
 if (window.supabase) {
   demarrerJoueur();
 } else {
@@ -92,7 +86,7 @@ function demarrerJoueur() {
 
 
 
-    valider.textContent = retraitDirect ? "Confirmer le retrait" : "Vérifier mon inscription";
+    valider.textContent = retraitDirect ? "Confirmer le retrait" : "Je m’engage à venir au match";
     message.textContent = "Renseigne ton prénom et ton numéro.";
     section.hidden = true;
     inscription.hidden = false;
@@ -139,15 +133,6 @@ function demarrerJoueur() {
     section.hidden = false;
   }
 
-  boutonFermer.addEventListener('click', () => {
-    retraitDirect = false;
-
-    selection = null;
-    inscription.hidden = true;
-    section.hidden = false;
-    message.textContent = '';
-  });
-
   inscription.addEventListener('submit', async event => {
     event.preventDefault();
     if (selection === null) return;
@@ -193,7 +178,6 @@ function demarrerJoueur() {
     }
     let actionTerminee = false;
     valider.disabled = true;
-    boutonFermer.disabled = true;
     message.textContent = 'Mise à jour en cours…';
 
     try {
@@ -235,11 +219,15 @@ function demarrerJoueur() {
       inscription.hidden = true;
       selection = null;
       message.textContent = statut ? 'Inscription retirée.'
-        : data === 'confirmed' ? 'Ta place est réservée.' : 'Tu es en liste d’attente.';
+        : data === 'confirmed' ? 'Inscription validée. Retour à l’accueil…' : 'Tu es en liste d’attente.';
       if ('BroadcastChannel' in window) {
         const canal = new BroadcastChannel('bitume-matchs');
         canal.postMessage('actualiser');
         canal.close();
+      }
+      if (!statut && data === 'confirmed') {
+        setTimeout(() => location.assign('index.html'), 1400);
+        return;
       }
       await chargerMatchs();
     } catch (erreur) {
@@ -248,7 +236,6 @@ function demarrerJoueur() {
         : erreur.message || 'Impossible de mettre à jour ton inscription.';
     } finally {
       valider.disabled = false;
-      boutonFermer.disabled = false;
     }
   });
 

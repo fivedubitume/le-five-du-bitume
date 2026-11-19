@@ -3,8 +3,11 @@ const clientFeuille = window.supabase?.createClient(
   { auth: { storageKey: 'bitume-session-joueur' } }
 );
 let demandeFeuille = 0;
+const cadragesMaillots = fetch('cadrage-maillots.json')
+  .then(reponse => reponse.ok ? reponse.json() : {})
+  .catch(() => ({}));
 
-function creerMaillot(joueur, catalogue, rang) {
+function creerMaillot(joueur, catalogue, rang, cadrages) {
   const article = document.createElement('li');
   article.className = 'feuille-joueur';
   const equipe = catalogue.find(item => item.id === joueur.equipe);
@@ -16,7 +19,15 @@ function creerMaillot(joueur, catalogue, rang) {
     image.loading = 'lazy';
     image.referrerPolicy = 'no-referrer';
     image.addEventListener('error', () => afficherMaillotBitume(visuel), { once: true });
-    if (equipe.id === "morocco-2026-world-cup") image.className = "feuille-maillot-maroc";
+    const cadrage = cadrages[equipe.id];
+    if (cadrage) {
+      const [largeur, hauteur, gauche, haut, droite, bas] = cadrage;
+      const hauteurVisible = bas - haut;
+      image.classList.add('feuille-maillot-cadre');
+      image.style.height = `${100 * hauteur / hauteurVisible}%`;
+      image.style.top = `${-100 * haut / hauteurVisible}%`;
+      image.style.transform = `translateX(${-50 * (gauche + droite) / largeur}%)`;
+    }
     image.src = equipe.image;
     visuel.append(image);
   } else {
@@ -53,7 +64,10 @@ async function chargerFeuille() {
       conteneur.replaceChildren();
       return;
     }
-    const catalogue = await catalogueMaillots.charger().catch(() => []);
+    const [catalogue, cadrages] = await Promise.all([
+      catalogueMaillots.charger().catch(() => []),
+      cadragesMaillots
+    ]);
     if (demande !== demandeFeuille || !conteneur.isConnected) return;
     const feuille = document.createElement('section');
     feuille.className = 'feuille-panneau';
@@ -62,7 +76,7 @@ async function chargerFeuille() {
     feuille.querySelector('p').textContent = `${match.joueurs.length}/${match.capacity} inscrits`;
     const liste = document.createElement('ul');
     liste.className = 'feuille-maillots';
-    match.joueurs.forEach((joueur, index) => liste.append(creerMaillot(joueur, catalogue, index + 1)));
+    match.joueurs.forEach((joueur, index) => liste.append(creerMaillot(joueur, catalogue, index + 1, cadrages)));
     if (match.joueurs.length) feuille.append(liste);
     if (match.joueurs.some(joueur => joueur.equipe)) {
       const source = document.createElement('a');

@@ -6,7 +6,7 @@
 .feuille-entete img { width: 42px; height: 42px; object-fit: contain; }
 .feuille-entete h2 { font-size: clamp(1.15rem, 2vw, 1.6rem); margin: 0; }
 .feuille-entete p { margin: 4px 0 0; color: #c8d5c7; font-size: .88rem; }
-.feuille-maillots { list-style: none; padding: 0; margin: 18px 0 0; display: grid; grid-template-columns: repeat(auto-fit, minmax(68px, 1fr)); gap: 14px 8px; }
+.feuille-maillots { list-style: none; padding: 0; margin: 18px 0 0; display: grid; grid-template-columns: repeat(auto-fit, minmax(84px, 1fr)); gap: 14px 8px; }
 .feuille-joueur { min-width: 0; text-align: center; }
 .feuille-visuel { position: relative; margin: 0 auto 10px; max-width: 100px; height: 76px; isolation: isolate; }
 .feuille-visuel::after { content: ""; position: absolute; z-index: -1; width: 64%; height: 8px; bottom: -4px; left: 18%; border-radius: 50%; background: #000; filter: blur(4px); }
@@ -24,5 +24,5 @@
 .feuille-source { display: inline-block; margin-top: 12px; color: #b9c8b9; font-size: .72rem; }
 
 .feuille-visuel { height: clamp(76px, 7vw, 94px); }
-.feuille-visuel img.feuille-maillot-maroc { transform: scale(1.3); }
+.feuille-visuel img.feuille-maillot-cadre { position: absolute; left: 50%; width: auto; max-width: none; }
 .feuille-numero { display: block; margin-top: 4px; font-size: .85rem; font-weight: 700; }
