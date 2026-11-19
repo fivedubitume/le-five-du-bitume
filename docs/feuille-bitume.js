@@ -44,11 +44,11 @@ function creerMaillot(joueur, catalogue, rang, cadrages) {
 }
 
 function afficherMaillotBitume(visuel) {
-  const logo = document.createElement('img');
-  logo.src = 'logo.PNG';
-  logo.alt = 'Maillot du Bitume';
-  visuel.classList.add('feuille-bitume-visuel');
-  visuel.replaceChildren(logo);
+  const image = document.createElement('img');
+  image.src = 'maillot-bitume.png';
+  image.alt = 'Maillot domicile du Five du Bitume';
+  image.loading = 'lazy';
+  visuel.replaceChildren(image);
 }
 
 async function chargerFeuille() {
