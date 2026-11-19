@@ -225,7 +225,7 @@ function demarrerJoueur() {
         : await client.rpc('reserver_five_avec_maillot', {
           p_match_id: match.id,
           p_equipe: equipeChoisie?.id ?? null,
-          p_numero: inscription.elements.numero_maillot.valueAsNumber || null
+          p_numero: null
         });
       if (reservation.error) throw reservation.error;
       const { data } = reservation;

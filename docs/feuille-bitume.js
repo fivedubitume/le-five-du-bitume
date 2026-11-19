@@ -4,7 +4,7 @@ const clientFeuille = window.supabase?.createClient(
 );
 let demandeFeuille = 0;
 
-function creerMaillot(joueur, catalogue) {
+function creerMaillot(joueur, catalogue, rang) {
   const article = document.createElement('li');
   article.className = 'feuille-joueur';
   const equipe = catalogue.find(item => item.id === joueur.equipe);
@@ -16,6 +16,7 @@ function creerMaillot(joueur, catalogue) {
     image.loading = 'lazy';
     image.referrerPolicy = 'no-referrer';
     image.addEventListener('error', () => afficherMaillotBitume(visuel), { once: true });
+    if (equipe.id === "morocco-2026-world-cup") image.className = "feuille-maillot-maroc";
     image.src = equipe.image;
     visuel.append(image);
   } else {
@@ -24,12 +25,10 @@ function creerMaillot(joueur, catalogue) {
   const nom = document.createElement('strong');
   nom.textContent = joueur.prenom;
   article.append(visuel, nom);
-  if (joueur.numero !== null && joueur.numero !== undefined) {
-    const numero = document.createElement('span');
-    numero.className = 'feuille-numero';
-    numero.textContent = `N° ${joueur.numero}`;
-    article.append(numero);
-  }
+  const numero = document.createElement('span');
+  numero.className = 'feuille-numero';
+  numero.textContent = `N° ${rang}`;
+  article.append(numero);
   return article;
 }
 
@@ -63,7 +62,7 @@ async function chargerFeuille() {
     feuille.querySelector('p').textContent = `${match.joueurs.length}/${match.capacity} inscrits`;
     const liste = document.createElement('ul');
     liste.className = 'feuille-maillots';
-    for (const joueur of match.joueurs) liste.append(creerMaillot(joueur, catalogue));
+    match.joueurs.forEach((joueur, index) => liste.append(creerMaillot(joueur, catalogue, index + 1)));
     if (match.joueurs.length) feuille.append(liste);
     if (match.joueurs.some(joueur => joueur.equipe)) {
       const source = document.createElement('a');
