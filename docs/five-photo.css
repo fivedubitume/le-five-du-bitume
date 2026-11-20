@@ -175,3 +175,9 @@ header .menu-five a:focus-visible { outline: 2px solid white; outline-offset: 2p
   header .menu-five a { grid-column: span 3; box-sizing: border-box; min-height: 44px; padding: 4px 1px; font-size: clamp(.68rem, 3vw, .83rem); }
   header .menu-five a:nth-child(n+5) { grid-column: span 4; }
 }
+
+.titre-calendrier { font-size: clamp(1.55rem, 4vw, 2.6rem); margin: 0 0 .65em; }
+#calendrier-accueil { display: grid; gap: 1rem; }
+.hero-photo .date-match { margin: 0; font-size: clamp(1.25rem, 3.6vw, 2.6rem); line-height: 1.12; }
+.hero-photo .date-match::first-letter { text-transform: uppercase; }
+.hero-photo .places-match { margin: .3em 0; font-weight: 700; }

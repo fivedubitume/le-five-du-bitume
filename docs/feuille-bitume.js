@@ -51,47 +51,65 @@ function afficherMaillotBitume(visuel) {
   visuel.replaceChildren(image);
 }
 
-async function chargerFeuille() {
-  const conteneur = document.querySelector('#accueil-feuille');
-  if (!conteneur || document.visibilityState === 'hidden') return;
-  const demande = ++demandeFeuille;
-  try {
-    if (!clientFeuille) throw new Error('Supabase indisponible');
-    const { data: matchs, error } = await clientFeuille.rpc('feuille_maillots_five');
-    if (error) throw error;
-    const match = matchs[0];
-    if (!match) {
-      conteneur.replaceChildren();
-      return;
-    }
-    const [catalogue, cadrages] = await Promise.all([
-      catalogueMaillots.charger().catch(() => []),
-      cadragesMaillots
-    ]);
-    if (demande !== demandeFeuille || !conteneur.isConnected) return;
+function creerFeuilleMatch(match, catalogue, cadrages) {
     const feuille = document.createElement('section');
     feuille.className = 'feuille-panneau';
     feuille.setAttribute('aria-label', 'Feuille de match');
-    feuille.innerHTML = '<div class="feuille-entete"><img src="logo.PNG" alt=""><div><h2>Feuille du prochain Five</h2><p></p></div></div>';
+    feuille.innerHTML = '<div class="feuille-entete"><img src="logo.PNG" alt=""><div><h2>Feuille de match</h2><p></p></div></div>';
     feuille.querySelector('p').textContent = `${match.joueurs.length}/${match.capacity} inscrits`;
     const liste = document.createElement('ul');
     liste.className = 'feuille-maillots';
     match.joueurs.forEach((joueur, index) => liste.append(creerMaillot(joueur, catalogue, index + 1, cadrages)));
     if (match.joueurs.length) feuille.append(liste);
-    conteneur.replaceChildren(feuille);
+    return feuille;
+}
+
+const dateAgenda = new Intl.DateTimeFormat('fr-FR', {
+  weekday: 'long', day: 'numeric', month: 'long', year: 'numeric',
+  hour: '2-digit', minute: '2-digit', timeZone: 'Europe/Paris'
+});
+
+async function chargerAgenda() {
+  const zone = document.querySelector('#calendrier-accueil');
+  if (!zone || document.hidden) return;
+  const demande = ++demandeFeuille;
+  try {
+    const [disponibles, feuilles, catalogue, cadrages] = await Promise.all([
+      lireDisponibilites(),
+      clientFeuille.rpc('feuilles_agenda_five'),
+      catalogueMaillots.charger().catch(() => []),
+      cadragesMaillots
+    ]);
+    if (demande !== demandeFeuille || !zone.isConnected) return;
+    const parMatch = new Map((feuilles.data || []).map(item => [item.match_id, item]));
+    const cartes = disponibles.filter(m => Date.parse(m.starts_at) > Date.now())
+      .sort((a,b) => Date.parse(a.starts_at) - Date.parse(b.starts_at) || a.id.localeCompare(b.id))
+      .map(match => {
+        const carte = document.querySelector('#modele-match').content.firstElementChild.cloneNode(true);
+        const feuille = parMatch.get(match.id);
+        carte.querySelector('.date-match').textContent = dateAgenda.format(new Date(match.starts_at));
+        carte.querySelector('.places-match').textContent = textePlaces(match.places_restantes);
+        afficherTerrainFive(carte.querySelector('.terrain-five'), feuille?.lieu || match.venue || 'Terrain à préciser');
+        const id = encodeURIComponent(match.id);
+        carte.querySelector('[data-reserver]').href = 'joueur.html?match=' + id;
+        carte.querySelector('[data-retirer]').href = 'joueur.html?retrait=1&match=' + id;
+        carte.querySelector('.feuille-match').append(feuille
+          ? creerFeuilleMatch(feuille, catalogue, cadrages)
+          : 'Feuille de match temporairement indisponible.');
+        return carte;
+      });
+    zone.replaceChildren(...(cartes.length ? cartes : ['Aucun Five programmé pour le moment.']));
   } catch {
-    if (demande === demandeFeuille && conteneur.isConnected) {
-      conteneur.textContent = 'Feuille de match temporairement indisponible.';
-    }
+    if (demande === demandeFeuille && zone.isConnected && !zone.children.length)
+      zone.textContent = 'Calendrier temporairement indisponible.';
   }
 }
 
-for (const evenement of ['pageshow', 'focus', 'hashchange']) {
-  window.addEventListener(evenement, chargerFeuille);
-}
-setInterval(chargerFeuille, 30000);
+for (const evenement of ['pageshow', 'focus', 'hashchange'])
+  window.addEventListener(evenement, chargerAgenda);
+setInterval(chargerAgenda, 30000);
 if ('BroadcastChannel' in window) {
-  const canalFeuille = new BroadcastChannel('bitume-matchs');
-  canalFeuille.addEventListener('message', chargerFeuille);
+  const canalAgenda = new BroadcastChannel('bitume-matchs');
+  canalAgenda.addEventListener('message', chargerAgenda);
 }
-chargerFeuille();
+chargerAgenda();
