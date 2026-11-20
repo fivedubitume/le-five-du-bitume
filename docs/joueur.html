@@ -4,11 +4,11 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Espace joueur · Le Five du Bitume</title>
-  <link rel="stylesheet" href="style.css">
+  <link rel="stylesheet" href="style.css?v=terrains">
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.89.0/dist/umd/supabase.js" defer></script>
   <script src="supabase-config.js" defer></script>
-  <script src="disponibilites.js" defer></script>
-  <link rel="stylesheet" href="five-maillots.css"><script src="maillots.js" defer></script><script src="joueur.js?v=organiser" defer></script>
+  <script src="disponibilites.js?v=terrains" defer></script>
+  <link rel="stylesheet" href="five-maillots.css"><script src="maillots.js" defer></script><script src="joueur.js?v=terrains" defer></script>
 </head>
 <body>
   <main class="wrap" id="espace-joueur">
@@ -16,6 +16,7 @@
     <h1>Espace joueur</h1>
     <p id="joueur-message" role="status">Chargement…</p>
     <form id="joueur-inscription" class="card section" hidden>
+      <div id="terrain-five-joueur" class="terrain-five"></div>
       <label>Ton vrai prénom
         <input name="prenom" autocomplete="given-name" maxlength="40" required>
       </label>

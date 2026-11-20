@@ -4,11 +4,11 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Organiser un Five · Le Five du Bitume</title>
-  <link rel="stylesheet" href="style.css">
+  <link rel="stylesheet" href="style.css?v=terrains">
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.89.0/dist/umd/supabase.js" defer></script>
   <script src="supabase-config.js" defer></script>
-  <script src="disponibilites.js" defer></script>
-  <script src="organiser.js" defer></script>
+  <script src="disponibilites.js?v=terrains" defer></script>
+  <script src="organiser.js?v=terrains" defer></script>
 </head>
 <body>
   <main class="wrap">
@@ -21,7 +21,7 @@
         <label>Ton numéro de téléphone <input name="telephone" type="tel" autocomplete="tel" required></label>
       </div>
       <label>Nom du match <input name="titre" maxlength="60" required></label>
-      <label>Terrain <input name="terrain" maxlength="100" required></label>
+      <div id="terrains-organiser"></div>
       <label>Date et heure (heure de ton appareil) <input name="debut" type="datetime-local" required></label>
       <label>Nombre total de places à inscrire sur le site
         <input name="places" type="number" min="2" max="120" value="10" required>

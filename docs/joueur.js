@@ -91,6 +91,7 @@ function demarrerJoueur() {
 
     valider.textContent = retraitDirect ? "Confirmer le retrait" : "Je m’engage à venir au match";
     message.textContent = "Renseigne ton prénom et ton numéro.";
+    afficherTerrainFive(document.querySelector("#terrain-five-joueur"), match.venue);
     section.hidden = true;
     inscription.hidden = false;
     inscription.elements.prenom.focus();
@@ -120,7 +121,6 @@ function demarrerJoueur() {
       infos.textContent = [
         match.title || 'Prochain Five',
         date.format(new Date(match.starts_at)),
-        match.venue,
         typeof match.price_cents === 'number' ? prix.format(match.price_cents / 100) : '',
         parMatch.has(match.id) ? textePlaces(parMatch.get(match.id)) : '',
         statut === 'confirmed' ? 'Place réservée' : statut === 'waitlist' ? 'En liste d’attente' : ''
@@ -132,7 +132,10 @@ function demarrerJoueur() {
       bouton.textContent = "Je prends ma place";
       bouton.addEventListener('click', () => ouvrirFormulaire(match));
       boutonsMatchs.set(match.id, bouton);
-      ligne.append(infos, bouton);
+      const lieu = document.createElement("div");
+      lieu.className = "terrain-five";
+      afficherTerrainFive(lieu, match.venue);
+      ligne.append(infos, lieu, bouton);
       liste.append(ligne);
     }
     section.hidden = false;

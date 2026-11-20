@@ -65,9 +65,7 @@ function afficherCreationMatch(token) {
       <label>Date et heure (heure locale de cet appareil)
         <input name="starts_at" type="datetime-local" required>
       </label>
-      <label>Lieu
-        <input name="venue" value="Wittenheim" maxlength="60" required>
-      </label>
+      <div data-choix-terrain></div>
       <label>Nombre de places
         <input name="capacity" type="number" min="2" max="120" value="10" required>
       </label>
@@ -80,6 +78,7 @@ function afficherCreationMatch(token) {
   `;
 
   const matchForm = section.querySelector('form');
+  installerChoixTerrainFive(matchForm.querySelector('[data-choix-terrain]'), 'venue');
   const save = matchForm.querySelector('button');
   const feedback = section.querySelector('[role="status"]');
 

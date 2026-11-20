@@ -1,3 +1,5 @@
+installerChoixTerrainFive(document.querySelector('#terrains-organiser'), 'terrain');
+
 const formulaireFive = document.querySelector('#organiser-five');
 const champsProfilFive = document.querySelector('#organiser-profil');
 const messageOrganisation = document.querySelector('#organiser-message');
