@@ -1,0 +1,32 @@
+.classements-bandeau {
+  display: flex;
+  align-items: center;
+  min-height: clamp(160px, 53vw, 340px);
+  padding: clamp(12px, 3vw, 34px);
+  border: 1px solid var(--line);
+  border-radius: 16px;
+  background: #11170f url("podium-bitume.webp") right center / auto 100% no-repeat;
+}
+
+.classements-bandeau h1 {
+  margin: 0;
+  font-size: clamp(1.22rem, 5.8vw, 3.8rem);
+  text-shadow: 0 2px 10px #000;
+}
+
+.classements-filtres {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 7px;
+  margin: 10px 0 12px;
+}
+
+.classements-filtres .btn {
+  display: grid;
+  place-items: center;
+  min-height: 44px;
+  padding: 6px 4px;
+  text-align: center;
+  line-height: 1.15;
+  font-size: clamp(.72rem, 2.9vw, .95rem);
+}

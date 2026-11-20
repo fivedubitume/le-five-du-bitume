@@ -98,7 +98,7 @@ function afficherClassements(categorie) {
   const liens = criteres.map(critere =>
     `<a class="btn ${critere === actif ? '' : 'alt'}" href="#classements/${critere.id}"${critere === actif ? ' aria-current="page"' : ''}>${critere.nom}</a>`
   ).join('');
-  return `<h1>Classements</h1><div class="actions">${liens}</div><section class="card"><h2>${actif.nom}</h2><div id="historique-five" data-classement="${actif.id}">Chargement…</div></section>`;
+  return `<div class="classements-bandeau"><h1>Classements</h1></div><div class="actions classements-filtres" aria-label="Filtres du classement">${liens}</div><section class="card"><h2>${actif.nom}</h2><div id="historique-five" data-classement="${actif.id}">Chargement…</div></section>`;
 }
 
 function render() {
