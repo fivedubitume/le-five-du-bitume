@@ -149,3 +149,29 @@
   .regles-groupe { margin-top: 9px; padding: 10px; }
   .regles-groupe h2 { margin: 0; font-size: 1.15rem; }
 }
+
+header .menu-five { gap: 5px; }
+header .menu-five a {
+  display: grid;
+  place-items: center;
+  text-align: center;
+  border: 1px solid #59705c;
+  border-radius: 9px;
+  background: #203125;
+  color: #f2f6ee;
+  font-weight: 700;
+  line-height: 1.15;
+}
+header .menu-five a:hover { border-color: #cbfa62; }
+header .menu-five a[aria-current="page"] {
+  color: #142010;
+  background: #cbfa62;
+  border-color: #cbfa62;
+}
+header .menu-five a:focus-visible { outline: 2px solid white; outline-offset: 2px; }
+@media (max-width: 900px) {
+  header .bar { flex-direction: column; align-items: stretch; }
+  header .menu-five { display: grid; grid-template-columns: repeat(12, minmax(0, 1fr)); }
+  header .menu-five a { grid-column: span 3; box-sizing: border-box; min-height: 44px; padding: 4px 1px; font-size: clamp(.68rem, 3vw, .83rem); }
+  header .menu-five a:nth-child(n+5) { grid-column: span 4; }
+}

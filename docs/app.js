@@ -52,7 +52,7 @@ function reglesDuGroupe() {
   return `<section class="regles-groupe" id="regles-du-groupe" aria-labelledby="titre-regles">
     <div class="regles-bandeau">
       <img src="cartons-arbitre.webp" alt="Cartons d’arbitre blanc, jaune et rouge au bord d’un terrain de Five" width="1280" height="720" loading="lazy" decoding="async">
-      <h2 id="titre-regles">Les règles du Five du Bitume</h2>
+      <h1 id="titre-regles">Les règles du Five du Bitume</h1>
     </div>
     <div class="regles-contenu">
       <p>Le Five, c’est avant tout un bon moment entre nous. Pour que chacun puisse compter sur les autres et que l’organisation reste simple, voilà le fonctionnement du groupe.</p>
@@ -98,8 +98,7 @@ function reglesDuGroupe() {
 }
 
 function home() {
-  return `<section class="hero hero-five hero-photo"><div class="hero-photo-colonne"><div class="hero-photo-cadre"><img class="hero-photo-joueurs" src="joueurs-bitume.webp" alt="Deux joueurs du Five du Bitume en action sur un terrain indoor" width="1672" height="941" fetchpriority="high"></div><div class="hero-five-intro"><p class="tag">Football à 5</p><h1>LE FIVE DU BITUME</h1><label id="choix-five-accueil" hidden>Match à venir<select></select></label><p id="prochain-five">Chargement du prochain Five…</p><div class="terrain-five" id="terrain-five-accueil"></div><div class="actions"><a class="btn" id="reserver-five-accueil" href="joueur.html">Je prends ma place</a> <a class="btn alt" id="retirer-five-accueil" href="joueur.html?retrait=1">Je retire ma place</a></div></div></div><div id="accueil-feuille"></div></section>
-  ${reglesDuGroupe()}`;
+  return `<section class="hero hero-five hero-photo"><div class="hero-photo-colonne"><div class="hero-photo-cadre"><img class="hero-photo-joueurs" src="joueurs-bitume.webp" alt="Deux joueurs du Five du Bitume en action sur un terrain indoor" width="1672" height="941" fetchpriority="high"></div><div class="hero-five-intro"><p class="tag">Football à 5</p><h1>LE FIVE DU BITUME</h1><label id="choix-five-accueil" hidden>Match à venir<select></select></label><p id="prochain-five">Chargement du prochain Five…</p><div class="terrain-five" id="terrain-five-accueil"></div><div class="actions"><a class="btn" id="reserver-five-accueil" href="joueur.html">Je prends ma place</a> <a class="btn alt" id="retirer-five-accueil" href="joueur.html?retrait=1">Je retire ma place</a></div></div></div><div id="accueil-feuille"></div></section>`;
 }
 function summary(m) {
   if (m.open) return '<p class="muted">Votes en cours</p>';
@@ -154,6 +153,7 @@ function render() {
   const [route, categorie] = location.hash.slice(1).split('/');
   const pages = {
     accueil: home,
+    regles: reglesDuGroupe,
     classements: afficherClassements,
     vote: () => '<section class="card" id="vote-five"><header class="vote-bandeau"><img src="trophee-bitume.webp" alt="Un joueur du Bitume reçoit le trophée de son coéquipier" width="1280" height="720" decoding="async"><h1>Vote pour l’homme du match</h1></header></section><section class="card section" id="notes-five"><h2>Noter les joueurs</h2></section>',
     cartons: () => '<header class="vote-bandeau"><img src="arbitre-bitume.webp" alt="Un arbitre brandit un carton rouge sur un terrain de Five" width="1280" height="720" decoding="async"><h1>Les cartons des joueurs</h1></header><section class="card section" id="cartons-five">Chargement…</section>'
