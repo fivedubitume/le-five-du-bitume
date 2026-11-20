@@ -5,16 +5,16 @@ function afficherGestionAdmin(token) {
   panneau.id = 'gestion-admin';
   panneau.className = 'card section';
   panneau.innerHTML = `
-    <h2>Gestion des matchs</h2>
-    <div class="actions">
-      <button class="btn alt" type="button" id="vue-matchs">Voir les archives</button>
-      <button class="btn alt" type="button" id="archive-match" hidden></button>
+    <h2>Matchs à venir</h2>
+    <div class="match-choix" id="avenir"></div>
+    <div id="fiche-admin" class="section">
+      <div class="terrain-five" id="lieu-admin"></div>
+      <h3>Participants</h3>
+      <div id="lignes-joueurs"></div>
+      <div id="resultat-five-admin" class="section"></div>
+      <button class="btn alt" type="button" id="archive-match">Supprimer ce match</button>
     </div>
-    <label for="choix-match">Match</label>
-    <select id="choix-match"></select>
     <p role="status" aria-live="polite"></p>
-    <div id="lignes-joueurs"></div>
-    <div id="resultat-five-admin" class="section"></div>
     <details class="section">
       <summary>Historique des cartons par Five</summary>
       <div id="cartons-five-admin"></div>
@@ -35,11 +35,14 @@ function afficherGestionAdmin(token) {
       <summary>Joueurs sanctionnés</summary>
       <div id="liste-sanctions"></div>
     </details>
+    <h2 class="section">Matchs passés</h2>
+    <div class="match-choix" id="passes"></div>
   `;
   result.after(panneau);
 
-  const choix = panneau.querySelector('#choix-match');
-  const vue = panneau.querySelector('#vue-matchs');
+  let selection = '';
+  let prochainChangement;
+  const fiche = panneau.querySelector('#fiche-admin');
   const archive = panneau.querySelector('#archive-match');
   const liste = panneau.querySelector('#lignes-joueurs');
   const espaceResultat = panneau.querySelector('#resultat-five-admin');
@@ -54,7 +57,7 @@ function afficherGestionAdmin(token) {
     timeZone: 'Europe/Paris'
   });
 
-  let afficherArchives = false;
+
   let enCours = false;
   let lecture = 0;
   let matchs = [];
@@ -116,7 +119,7 @@ function afficherGestionAdmin(token) {
       }
 
       await charger();
-      if (typeof afficherMatchsReels === 'function') await afficherMatchsReels(token);
+
 
       message.textContent = retour?.statut === 'waitlist'
         ? 'Joueur remis en liste d’attente.'
@@ -157,7 +160,7 @@ function afficherGestionAdmin(token) {
     actions.style.maxWidth = '100%';
     actions.append(new Option('Actions…', ''));
 
-    if (match.archived_admin === false && new Date(match.starts_at).getTime() > Date.now()) {
+    if (new Date(match.starts_at).getTime() > Date.now()) {
       if (joueur.statut === 'retire') {
         if (joueur.bloque === false) {
           actions.append(new Option('Remettre dans ce match', 'remettre_match'));
@@ -172,7 +175,7 @@ function afficherGestionAdmin(token) {
 
     if (joueur.numero) {
       actions.append(new Option(
-        joueur.bloque ? 'Débloquer le numéro' : 'Bloquer pour tous les matchs',
+        joueur.bloque ? 'Débloquer le numéro' : 'Exclure du groupe · bloquer ce numéro',
         joueur.bloque ? 'debloquer_numero' : 'bloquer_numero'
       ));
     }
@@ -328,14 +331,15 @@ function afficherGestionAdmin(token) {
 
   async function chargerJoueurs() {
     const requete = ++lecture;
-    const match = matchs.find(item => item.id === choix.value);
+    const match = matchs.find(item => item.id === selection);
     archive.hidden = match === undefined;
-    archive.textContent = afficherArchives ? 'Sortir des archives' : 'Archiver ce match';
+    fiche.hidden = !match;
+    if (match) afficherTerrainFive(panneau.querySelector('#lieu-admin'), match.venue);
     liste.replaceChildren();
     espaceResultat.replaceChildren();
 
     if (match === undefined) {
-      liste.append(texte('p', afficherArchives ? 'Aucun match archivé.' : 'Aucun match dans le tableau principal.'));
+
       return;
     }
 
@@ -364,24 +368,16 @@ function afficherGestionAdmin(token) {
   }
 
   async function charger() {
-    const precedent = choix.value;
-    const [tousLesMatchs, numeros, cartons] = await Promise.all([
-      appeler('matchs'), appeler('numeros'), appeler('sanctions')
+    const [tousLesMatchs, numeros, cartons, lieux] = await Promise.all([
+      appeler('matchs'), appeler('numeros'), appeler('sanctions'),
+      fetch(projectUrl + '/rest/v1/matches?select=id,venue&starts_at=gte.' +
+        encodeURIComponent(new Date(Date.now()-86400000).toISOString()), {
+        headers:{apikey:SUPABASE_KEY,Authorization:'Bearer '+token}
+      }).then(r => r.ok ? r.json() : [])
     ]);
-    matchs = tousLesMatchs;
-    const visibles = matchs.filter(match => match.archived_admin === afficherArchives);
-    if (afficherArchives) visibles.reverse();
-
-    choix.replaceChildren();
-    for (const match of visibles) {
-      choix.append(new Option(`${match.title} · ${date.format(new Date(match.starts_at))}`, match.id));
-    }
-    if (visibles.some(match => match.id === precedent)) {
-      choix.value = precedent;
-    } else if (afficherArchives === false) {
-      const prochain = visibles.find(match => new Date(match.starts_at).getTime() > Date.now());
-      if (prochain) choix.value = prochain.id;
-    }
+    const terrains = new Map(lieux.map(m => [m.id,m.venue]));
+    matchs = tousLesMatchs.map(m => ({...m,venue:m.venue || terrains.get(m.id)}));
+    afficherCalendrier();
 
     bloques.replaceChildren();
     if (numeros.length === 0) bloques.append(texte('p', 'Aucun numéro bloqué.'));
@@ -410,18 +406,52 @@ function afficherGestionAdmin(token) {
 
   function afficherErreur(erreur) { message.textContent = erreur.message; }
 
-  choix.addEventListener('change', () => chargerJoueurs().catch(afficherErreur));
-
-  vue.addEventListener('click', () => {
-    if (enCours) return;
-    afficherArchives = (afficherArchives === false);
-    vue.textContent = afficherArchives ? 'Voir le tableau principal' : 'Voir les archives';
-    charger().catch(afficherErreur);
-  });
-
-  archive.addEventListener('click', () => {
-    if (choix.value === '') return;
-    modifier(afficherArchives ? 'desarchiver' : 'archiver', { p_match_id: choix.value });
+  function afficherCalendrier() {
+    const maintenant = Date.now();
+    const avenir = matchs.filter(m => Date.parse(m.starts_at)>maintenant)
+      .sort((a,b)=>Date.parse(a.starts_at)-Date.parse(b.starts_at));
+    const passes = matchs.filter(m => Date.parse(m.starts_at)<=maintenant && Date.parse(m.starts_at)+86400000>maintenant)
+      .sort((a,b)=>Date.parse(b.starts_at)-Date.parse(a.starts_at));
+    const visibles = [...avenir,...passes];
+    if (!visibles.some(m => m.id === selection)) selection = visibles[0]?.id || '';
+    clearTimeout(prochainChangement);
+    const delais = visibles.map(m => {
+      const t = Date.parse(m.starts_at);
+      return (t>maintenant ? t : t+86400000)-maintenant;
+    });
+    if (delais.length) prochainChangement = setTimeout(() => {
+      afficherCalendrier();
+      chargerJoueurs().catch(afficherErreur);
+    },Math.min(2147483646,...delais)+1);
+    for (const [id,groupe,vide] of [['avenir',avenir,'Aucun match à venir.'],['passes',passes,'Aucun match dans les dernières 24 heures.']]) {
+      const zone = panneau.querySelector('#'+id);
+      zone.replaceChildren();
+      if (!groupe.length) zone.append(texte('p',vide));
+      for (const m of groupe) {
+        const choix = bouton(date.format(new Date(m.starts_at)), () => {
+          selection = m.id;
+          afficherCalendrier();
+          chargerJoueurs().catch(afficherErreur);
+        });
+        const lieu = document.createElement('span');
+        lieu.className = 'terrain-five';
+        afficherTerrainFive(lieu,m.venue);
+        choix.append(lieu);
+        choix.setAttribute('aria-pressed',String(m.id===selection));
+        zone.append(choix);
+      }
+      if (groupe.some(m=>m.id===selection)) zone.after(fiche);
+    }
+  }
+  archive.addEventListener('click', async () => {
+    const match = matchs.find(m=>m.id===selection);
+    if (!match || !confirm('Supprimer le Five du '+date.format(new Date(match.starts_at))+' et ses inscriptions ?')) return;
+    archive.disabled = true;
+    try {
+      await historiqueRpc('supprimer_five_organise',{p_match:match.id});
+      await charger();
+      message.textContent = 'Match supprimé.';
+    } catch (e) { afficherErreur(e); } finally { archive.disabled=false; }
   });
 
   formulaire.addEventListener('submit', async event => {

@@ -32,6 +32,7 @@ publierFive.disabled = true;
     if (data?.role === 'player' && data.phone) masquerProfilOrganisation();
   }
   publierFive.disabled = false;
+  if (session) await chargerMesFive();
 })().catch(erreur => { messageOrganisation.textContent = erreur.message; });
 
 formulaireFive.addEventListener('submit', async event => {
@@ -55,15 +56,16 @@ formulaireFive.addEventListener('submit', async event => {
       if (error) throw error;
       masquerProfilOrganisation();
     }
-    const { data: match, error } = await clientOrganisation.rpc('organiser_five', {
-      p_titre: 'Five du Bitume', p_lieu: champs.terrain.value,
+    const { data: match, error } = await clientOrganisation.rpc('publier_et_jouer_five', {
+      p_equipe: champs.equipe.value || null, p_titre: 'Five du Bitume', p_lieu: champs.terrain.value,
       p_debut: debut.toISOString(), p_places: champs.places.valueAsNumber,
       p_prix: Math.round(champs.prix.valueAsNumber * 100), p_demande: demandeOrganisation
     });
     if (error) throw error;
     publie = true;
     formulaireFive.hidden = true;
-    messageOrganisation.textContent = 'Ton Five est publié. Partage le lien avec les joueurs.';
+    messageOrganisation.textContent = 'Match publié. Ta place est confirmée.';
+    chargerMesFive().catch(erreur => { liensOrganisation.textContent = erreur.message; });
     const lien = document.createElement('a');
     lien.className = 'btn';
     lien.href = `joueur.html?match=${encodeURIComponent(match)}`;
@@ -86,3 +88,40 @@ formulaireFive.addEventListener('submit', async event => {
     publierFive.disabled = publie;
   }
 });
+
+catalogueMaillots.charger().then(equipes => {
+  for (const equipe of equipes.slice().sort((a,b) => a.label.localeCompare(b.label,'fr')))
+    formulaireFive.elements.equipe.add(new Option(equipe.label, equipe.id));
+}).catch(() => {});
+
+async function chargerMesFive() {
+  const { data, error } = await clientOrganisation.rpc('mes_five_organises');
+  if (error) throw error;
+  const zone = document.querySelector('#mes-five');
+  const liste = zone.querySelector('div');
+  liste.replaceChildren();
+  zone.hidden = !data.length;
+  for (const match of data) {
+    const article = document.createElement('article');
+    const lieu = document.createElement('div');
+    lieu.className = 'terrain-five';
+    afficherTerrainFive(lieu, match.venue);
+    const date = new Date(match.starts_at).toLocaleString('fr-FR',{dateStyle:'long',timeStyle:'short',timeZone:'Europe/Paris'});
+    const retirer = document.createElement('button');
+    retirer.className = 'btn alt';
+    retirer.textContent = 'Supprimer ce match';
+    retirer.onclick = async () => {
+      if (!confirm('Supprimer le Five du ' + date + ' et ses inscriptions ?')) return;
+      retirer.disabled = true;
+      try {
+        const {error} = await clientOrganisation.rpc('supprimer_five_organise',{p_match:match.id});
+        if (error) throw error;
+        messageOrganisation.textContent = 'Match supprimé.';
+        liensOrganisation.replaceChildren();
+        await chargerMesFive();
+      } catch (e) { messageOrganisation.textContent = e.message; retirer.disabled = false; }
+    };
+    article.append(date,lieu,retirer);
+    liste.append(article);
+  }
+}

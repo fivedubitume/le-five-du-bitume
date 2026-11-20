@@ -8,7 +8,8 @@
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.89.0/dist/umd/supabase.js" defer></script>
   <script src="supabase-config.js" defer></script>
   <script src="disponibilites.js?v=terrains" defer></script>
-  <script src="organiser.js?v=menu-mobile" defer></script>
+  <script src="maillots.js" defer></script>
+  <script src="organiser.js?v=pilotage" defer></script>
 </head>
 <body>
   <main class="wrap">
@@ -20,6 +21,7 @@
         <label>Ton vrai prénom <input name="prenom" autocomplete="given-name" maxlength="60" required></label>
         <label>Ton numéro de téléphone <input name="telephone" type="tel" autocomplete="tel" required></label>
       </div>
+      <label>Ton maillot préféré <select name="equipe"><option value="">Le Five du Bitume</option></select></label>
       <div id="terrains-organiser"></div>
       <label>Date et heure <input name="debut" type="datetime-local" required></label>
       <label>Nombre total de places à inscrire sur le site
@@ -30,6 +32,7 @@
     </form>
     <p id="organiser-message" role="status"></p>
     <div id="organiser-liens" class="actions"></div>
+    <section id="mes-five" class="card section" hidden><h2>Mes matchs organisés</h2><div></div></section>
   </main>
 </body>
 </html>
