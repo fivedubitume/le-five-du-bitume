@@ -48,9 +48,58 @@ function rankings() {
     return {p,games,average};
   }).filter(r=>r.games>=5 && !excluded(r.p)).sort((a,b)=>b.average-a.average);
 }
+function reglesDuGroupe() {
+  return `<section class="regles-groupe" id="regles-du-groupe" aria-labelledby="titre-regles">
+    <div class="regles-bandeau">
+      <img src="cartons-arbitre.webp" alt="Cartons d’arbitre blanc, jaune et rouge au bord d’un terrain de Five" width="1280" height="720" loading="lazy" decoding="async">
+      <h2 id="titre-regles">Les règles du Five du Bitume</h2>
+    </div>
+    <div class="regles-contenu">
+      <p>Le Five, c’est avant tout un bon moment entre nous. Pour que chacun puisse compter sur les autres et que l’organisation reste simple, voilà le fonctionnement du groupe.</p>
+      <ol class="regles-liste">
+        <li>
+          <h3>Inscription</h3>
+          <p>Chacun réserve sa place sur le site avec son vrai prénom et son vrai numéro de téléphone. Une fois la place confirmée, le groupe compte sur ta présence.</p>
+        </li>
+        <li>
+          <h3>Ponctualité</h3>
+          <p>On se donne rendez-vous 15 minutes avant le coup d’envoi. Ça nous laisse le temps de nous préparer ensemble et de profiter de tout le créneau.</p>
+        </li>
+        <li>
+          <h3>Désistement</h3>
+          <p>Un imprévu peut arriver. Si tu ne peux plus venir, tu peux libérer ta place avec le bouton « Je retire ma place ». Pour laisser le temps à quelqu’un d’autre de s’organiser, le délai de désistement est fixé à 48 heures avant le coup d’envoi.</p>
+        </li>
+        <li>
+          <h3>Cartons</h3>
+          <p>Le même barème s’applique à tout le monde, pour que les décisions soient claires et équitables.</p>
+          <ul class="regles-cartons">
+            <li class="regles-carton-blanc"><strong>Carton blanc</strong> — Désistement moins de 48 heures avant le coup d’envoi.</li>
+            <li class="regles-carton-jaune"><strong>Carton jaune</strong> — Retard de plus de 10 minutes le jour du Five.</li>
+            <li class="regles-carton-rouge"><strong>Carton rouge</strong> — Absence au Five alors que la place était confirmée.</li>
+          </ul>
+          <p>En cas de nouvel incident, on passe du blanc au jaune, puis du jaune au rouge. Un carton rouge entraîne l’exclusion du groupe.</p>
+        </li>
+        <li>
+          <h3>Vote pour l’homme du match</h3>
+          <p>Le vote s’ouvre au coup d’envoi et reste accessible pendant 48 heures. Chaque joueur dont la place est confirmée peut voter une fois par Five, avec son numéro de téléphone. En cas d’égalité, les gagnants sont ex æquo.</p>
+        </li>
+        <li>
+          <h3>Classements</h3>
+          <p>Les victoires, les titres d’homme du match et les notes moyennes sur 10 sont comptabilisés depuis le premier Five, sans remise à zéro annuelle.</p>
+        </li>
+        <li>
+          <h3>Réservation du terrain</h3>
+          <p>À chaque Five, une nouvelle personne est tirée au sort parmi les participants pour s’occuper de la réservation du terrain. Comme ça, l’organisation tourne et chacun y contribue à son tour.</p>
+        </li>
+      </ol>
+      <p class="regles-conclusion">Merci à tous de faire vivre le Five du Bitume. À bientôt sur le terrain ! ⚽</p>
+    </div>
+  </section>`;
+}
+
 function home() {
   return `<section class="hero hero-five hero-photo"><div class="hero-photo-colonne"><div class="hero-photo-cadre"><img class="hero-photo-joueurs" src="joueurs-bitume.webp" alt="Deux joueurs du Five du Bitume en action sur un terrain indoor" width="1672" height="941" fetchpriority="high"></div><div class="hero-five-intro"><p class="tag">Football à 5 · Wittenheim</p><h1>LE FIVE DU BITUME</h1><p id="prochain-five">Chargement du prochain Five…</p><div class="actions"><a class="btn" href="joueur.html">Je prends ma place</a> <a class="btn alt" href="joueur.html?retrait=1">Je retire ma place</a></div></div></div><div id="accueil-feuille"></div></section>
-  <section class="card regles-groupe" id="regles-du-groupe"><h2>Règles du groupe</h2><p class="muted">Les règles seront publiées ici.</p></section>`;
+  ${reglesDuGroupe()}`;
 }
 function summary(m) {
   if (m.open) return '<p class="muted">Votes en cours</p>';
