@@ -5,13 +5,24 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Connexion · Le Five du Bitume</title>
   <link rel="stylesheet" href="style.css">
+  <link rel="stylesheet" href="vote-bandeau.css">
+  <style>
+    .admin-bandeau h1 {
+      max-width: 54%;
+      font-size: clamp(1.1rem, 4.1vw, 3.35rem);
+      overflow-wrap: anywhere;
+    }
+  </style>
   <script src="supabase-config.js" defer></script>
   <script src="connexion.js" defer></script>
 <script src="disponibilites.js" defer></script><script src="participants-admin.js" defer></script><script src="retraits-admin.js" defer></script><script src="gestion-admin.js?v=historique" defer></script></head>
 <body>
   <main class="wrap">
     <p><a href="index.html">Accueil du Five du Bitume</a></p>
-    <h1>Espace administrateur</h1>
+    <header class="vote-bandeau admin-bandeau">
+      <img src="banc-bitume.webp" alt="" width="1280" height="720" decoding="async">
+      <h1>Espace administrateur</h1>
+    </header>
     <form id="connexion" class="card section">
       <label>Adresse e-mail
         <input name="email" type="email" autocomplete="username" required>
