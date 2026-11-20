@@ -14,6 +14,11 @@ function afficherGestionAdmin(token) {
     <select id="choix-match"></select>
     <p role="status" aria-live="polite"></p>
     <div id="lignes-joueurs"></div>
+    <div id="resultat-five-admin" class="section"></div>
+    <details class="section">
+      <summary>Historique des cartons par Five</summary>
+      <div id="cartons-five-admin"></div>
+    </details>
 
     <details class="section">
       <summary>Numéros bloqués</summary>
@@ -37,6 +42,8 @@ function afficherGestionAdmin(token) {
   const vue = panneau.querySelector('#vue-matchs');
   const archive = panneau.querySelector('#archive-match');
   const liste = panneau.querySelector('#lignes-joueurs');
+  const espaceResultat = panneau.querySelector('#resultat-five-admin');
+  const historiqueCartons = panneau.querySelector('#cartons-five-admin');
   const bloques = panneau.querySelector('#liste-bloques');
   const sanctions = panneau.querySelector('#liste-sanctions');
   const message = panneau.querySelector('[role="status"]');
@@ -200,12 +207,132 @@ function afficherGestionAdmin(token) {
     return actions;
   }
 
+  async function historiqueRpc(nom, donnees = {}, prive = true) {
+    const reponse = await fetch(`${projectUrl}/rest/v1/rpc/${nom}`, {
+      method: 'POST',
+      headers: {
+        apikey: SUPABASE_KEY,
+        ...(prive ? { Authorization: `Bearer ${token}` } : {}),
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify(donnees)
+    });
+    const data = await reponse.json();
+    if (!reponse.ok) throw new Error(data.message || 'Données indisponibles.');
+    return data;
+  }
+
+  function historiqueAction(action, match, data) {
+    return historiqueRpc('historique_five_admin', {
+      p_action: action, p_match: match, p_data: data
+    });
+  }
+
+  async function chargerCartonsParFive() {
+    const cartons = await historiqueRpc('cartons_five', {}, false);
+    historiqueCartons.replaceChildren();
+    if (!cartons.length) historiqueCartons.append(texte('p', 'Aucun carton par Five.'));
+    for (const carton of cartons) {
+      const entree = ligne();
+      const retirer = bouton('Retirer ce carton', async () => {
+        if (!window.confirm(`Retirer le carton ${carton.couleur} de ${carton.prenom} ?`)) return;
+        retirer.disabled = true;
+        try {
+          await historiqueAction('retirer_carton', null, { id: carton.id });
+          await chargerCartonsParFive();
+        } catch (erreur) {
+          afficherErreur(erreur);
+        } finally {
+          retirer.disabled = false;
+        }
+      });
+      entree.append(texte('span',
+        `${date.format(new Date(carton.date_match))} · ${carton.prenom} · ${carton.couleur}`), retirer);
+      historiqueCartons.append(entree);
+    }
+  }
+
+  function afficherResultatAdmin(match, joueurs, resultat) {
+    const confirmes = joueurs.filter(joueur => joueur.statut === 'confirmed');
+    if (!confirmes.length) return;
+
+    const ajouterChamp = (form, titre, champ) => {
+      const label = texte('label', titre);
+      label.append(champ);
+      form.append(label);
+    };
+
+    function formulaireHistorique(titre, libelle, enregistrer) {
+      const form = document.createElement('form');
+      form.className = 'card section';
+      form.append(texte('h3', titre));
+      const valider = texte('button', libelle);
+      valider.className = 'btn';
+      form.addEventListener('submit', async event => {
+        event.preventDefault();
+        valider.disabled = true;
+        try {
+          await enregistrer();
+          message.textContent = 'Enregistré.';
+        } catch (erreur) {
+          afficherErreur(erreur);
+        } finally {
+          valider.disabled = false;
+        }
+      });
+      return { form, valider };
+    }
+
+    if (new Date(match.starts_at).getTime() <= Date.now()) {
+      const equipes = new Map();
+      const scores = ['A', 'B'].map((_, index) => {
+        const input = document.createElement('input');
+        Object.assign(input, { type: 'number', min: '0', max: '99', step: '1', required: true });
+        input.value = index === 0 ? resultat?.score_a ?? '' : resultat?.score_b ?? '';
+        return input;
+      });
+      const { form, valider } = formulaireHistorique('Équipes et score', 'Enregistrer le résultat', () => {
+        const equipe = valeur => [...equipes].filter(([, champ]) => champ.value === valeur).map(([id]) => id);
+        return historiqueAction('score', match.id, {
+          score_a: scores[0].valueAsNumber, score_b: scores[1].valueAsNumber,
+          equipe_a: equipe('A'), equipe_b: equipe('B')
+        });
+      });
+      for (const joueur of confirmes) {
+        const choixEquipe = document.createElement('select');
+        choixEquipe.append(new Option('Non joué', ''), new Option('Équipe A', 'A'), new Option('Équipe B', 'B'));
+        if (resultat?.equipe_a.includes(joueur.id)) choixEquipe.value = 'A';
+        if (resultat?.equipe_b.includes(joueur.id)) choixEquipe.value = 'B';
+        equipes.set(joueur.id, choixEquipe);
+        ajouterChamp(form, joueur.prenom, choixEquipe);
+      }
+      ajouterChamp(form, 'Score de l’équipe A', scores[0]);
+      ajouterChamp(form, 'Score de l’équipe B', scores[1]);
+      form.append(valider);
+      espaceResultat.append(form);
+    }
+
+    const joueur = document.createElement('select');
+    joueur.append(...confirmes.map(item => new Option(item.prenom || 'Joueur', item.id)));
+    const couleur = document.createElement('select');
+    couleur.append(...['blanc', 'jaune', 'rouge'].map(item => new Option(item, item)));
+    const { form, valider } = formulaireHistorique('Carton sur ce Five', 'Ajouter le carton', async () => {
+      await historiqueAction('carton', match.id, { joueur: joueur.value, couleur: couleur.value });
+      await chargerCartonsParFive();
+    });
+    ajouterChamp(form, 'Joueur', joueur);
+    ajouterChamp(form, 'Couleur du carton', couleur);
+    form.append(valider);
+    espaceResultat.append(form);
+  }
+
   async function chargerJoueurs() {
     const requete = ++lecture;
     const match = matchs.find(item => item.id === choix.value);
     archive.hidden = match === undefined;
     archive.textContent = afficherArchives ? 'Sortir des archives' : 'Archiver ce match';
     liste.replaceChildren();
+    espaceResultat.replaceChildren();
 
     if (match === undefined) {
       liste.append(texte('p', afficherArchives ? 'Aucun match archivé.' : 'Aucun match dans le tableau principal.'));
@@ -226,6 +353,12 @@ function afficherGestionAdmin(token) {
           actionsJoueur(joueur, match)
         );
         liste.append(ligneJoueur);
+      }
+      try {
+        const resultat = await historiqueAction('lire', match.id, {});
+        if (requete === lecture) afficherResultatAdmin(match, joueurs, resultat);
+      } catch (erreur) {
+        if (requete === lecture) espaceResultat.append(texte('p', erreur.message));
       }
     }
   }
@@ -299,4 +432,7 @@ function afficherGestionAdmin(token) {
   });
 
   charger().catch(afficherErreur);
+  chargerCartonsParFive().catch(erreur => {
+    historiqueCartons.textContent = erreur.message;
+  });
 }

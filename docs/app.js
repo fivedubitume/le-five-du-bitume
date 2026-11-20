@@ -90,15 +90,15 @@ function admin() {
 }
 function afficherClassements(categorie) {
   const criteres = [
-    { id: 'victoires', nom: 'Victoires', attente: 'Les victoires apparaîtront après la publication des résultats.' },
-    { id: 'homme-du-match', nom: 'Homme du match', attente: 'Le classement apparaîtra après la publication des premiers titres.' },
-    { id: 'moyenne', nom: 'Note moyenne', attente: 'Les moyennes apparaîtront quand les notes des joueurs seront disponibles.' }
+    { id: 'victoires', nom: 'Victoires' },
+    { id: 'homme-du-match', nom: 'Homme du match' },
+    { id: 'moyenne', nom: 'Note moyenne' }
   ];
   const actif = criteres.find(critere => critere.id === categorie) ?? criteres[0];
   const liens = criteres.map(critere =>
     `<a class="btn ${critere === actif ? '' : 'alt'}" href="#classements/${critere.id}"${critere === actif ? ' aria-current="page"' : ''}>${critere.nom}</a>`
   ).join('');
-  return `<h1>Classements</h1><div class="actions">${liens}</div><section class="card"><h2>${actif.nom}</h2><p class="muted">${actif.attente}</p></section>`;
+  return `<h1>Classements</h1><div class="actions">${liens}</div><section class="card"><h2>${actif.nom}</h2><div id="historique-five" data-classement="${actif.id}">Chargement…</div></section>`;
 }
 
 function render() {
@@ -106,8 +106,8 @@ function render() {
   const pages = {
     accueil: home,
     classements: afficherClassements,
-    vote: () => '<section class="card" id="vote-five"><h1>Vote pour l’homme du match</h1></section>',
-    cartons: () => '<h1>Cartons par jour</h1><section class="card"><p class="muted">Les cartons seront affichés par date de match.</p></section>'
+    vote: () => '<section class="card" id="vote-five"><h1>Vote pour l’homme du match</h1></section><section class="card section" id="notes-five"><h2>Noter les joueurs</h2></section>',
+    cartons: () => '<h1>Les cartons des joueurs</h1><section class="card" id="cartons-five">Chargement…</section>'
   };
   const page = Object.hasOwn(pages, route) ? route : 'accueil';
   document.querySelectorAll('header nav a').forEach(lien => {
