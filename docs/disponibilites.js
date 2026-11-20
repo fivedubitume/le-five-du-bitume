@@ -17,19 +17,41 @@ function textePlaces(nombre) {
   return nombre === 1 ? '1 place restante' : `${nombre} places restantes`;
 }
 
+let lectureAccueil = 0;
+
 async function afficherProchainFive() {
   const info = document.querySelector('#prochain-five');
-  if (info === null) return;
+  const champ = document.querySelector('#choix-five-accueil');
+  if (!info || !champ) return;
+  const select = champ.querySelector('select');
+  const reserver = document.querySelector('#reserver-five-accueil');
+  const retirer = document.querySelector('#retirer-five-accueil');
+  const lecture = ++lectureAccueil;
   try {
-    const [match] = await lireDisponibilites(true);
+    const matchs = await lireDisponibilites();
+    if (lecture !== lectureAccueil || !info.isConnected) return;
     const format = new Intl.DateTimeFormat('fr-FR', {
-      dateStyle: 'full', timeStyle: 'short', timeZone: 'Europe/Paris'
+      dateStyle: 'medium', timeStyle: 'short', timeZone: 'Europe/Paris'
     });
-    info.textContent = match
-      ? `${format.format(new Date(match.starts_at))} · ${textePlaces(match.places_restantes)}`
-      : 'Aucun Five programmé pour le moment.';
+    const precedent = select.value;
+    select.replaceChildren(...matchs.map(match => new Option(
+      `${format.format(new Date(match.starts_at))} · ${match.title || 'Five'}`, match.id
+    )));
+    if (matchs.some(match => match.id === precedent)) select.value = precedent;
+    champ.hidden = matchs.length < 2;
+    function afficherSelection() {
+      const match = matchs.find(item => item.id === select.value);
+      info.textContent = match
+        ? [format.format(new Date(match.starts_at)), match.venue, textePlaces(match.places_restantes)].filter(Boolean).join(' · ')
+        : 'Aucun Five programmé pour le moment.';
+      const id = match ? encodeURIComponent(match.id) : '';
+      reserver.href = id ? `joueur.html?match=${id}` : 'joueur.html';
+      retirer.href = id ? `joueur.html?retrait=1&match=${id}` : 'joueur.html?retrait=1';
+    }
+    select.onchange = afficherSelection;
+    afficherSelection();
   } catch {
-    info.textContent = 'Date et places temporairement indisponibles.';
+    if (lecture === lectureAccueil && info.isConnected) info.textContent = 'Date et places temporairement indisponibles.';
   }
 }
 

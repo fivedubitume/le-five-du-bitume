@@ -98,7 +98,7 @@ function reglesDuGroupe() {
 }
 
 function home() {
-  return `<section class="hero hero-five hero-photo"><div class="hero-photo-colonne"><div class="hero-photo-cadre"><img class="hero-photo-joueurs" src="joueurs-bitume.webp" alt="Deux joueurs du Five du Bitume en action sur un terrain indoor" width="1672" height="941" fetchpriority="high"></div><div class="hero-five-intro"><p class="tag">Football à 5 · Wittenheim</p><h1>LE FIVE DU BITUME</h1><p id="prochain-five">Chargement du prochain Five…</p><div class="actions"><a class="btn" href="joueur.html">Je prends ma place</a> <a class="btn alt" href="joueur.html?retrait=1">Je retire ma place</a></div></div></div><div id="accueil-feuille"></div></section>
+  return `<section class="hero hero-five hero-photo"><div class="hero-photo-colonne"><div class="hero-photo-cadre"><img class="hero-photo-joueurs" src="joueurs-bitume.webp" alt="Deux joueurs du Five du Bitume en action sur un terrain indoor" width="1672" height="941" fetchpriority="high"></div><div class="hero-five-intro"><p class="tag">Football à 5 · Wittenheim</p><h1>LE FIVE DU BITUME</h1><label id="choix-five-accueil" hidden>Match à venir<select></select></label><p id="prochain-five">Chargement du prochain Five…</p><div class="actions"><a class="btn" id="reserver-five-accueil" href="joueur.html">Je prends ma place</a> <a class="btn alt" id="retirer-five-accueil" href="joueur.html?retrait=1">Je retire ma place</a></div></div></div><div id="accueil-feuille"></div></section>
   ${reglesDuGroupe()}`;
 }
 function summary(m) {

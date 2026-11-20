@@ -1,0 +1,37 @@
+<!doctype html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Organiser un Five · Le Five du Bitume</title>
+  <link rel="stylesheet" href="style.css">
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.89.0/dist/umd/supabase.js" defer></script>
+  <script src="supabase-config.js" defer></script>
+  <script src="disponibilites.js" defer></script>
+  <script src="organiser.js" defer></script>
+</head>
+<body>
+  <main class="wrap">
+    <p><a href="index.html">← Accueil du Five du Bitume</a></p>
+    <h1>Organiser un Five</h1>
+    <p>Réserve le terrain avec le centre, puis publie ton match. Tu pourras partager le lien avec les joueurs.</p>
+    <form id="organiser-five" class="card section">
+      <div id="organiser-profil">
+        <label>Ton vrai prénom <input name="prenom" autocomplete="given-name" maxlength="60" required></label>
+        <label>Ton numéro de téléphone <input name="telephone" type="tel" autocomplete="tel" required></label>
+      </div>
+      <label>Nom du match <input name="titre" maxlength="60" required></label>
+      <label>Terrain <input name="terrain" maxlength="100" required></label>
+      <label>Date et heure (heure de ton appareil) <input name="debut" type="datetime-local" required></label>
+      <label>Nombre total de places à inscrire sur le site
+        <input name="places" type="number" min="2" max="120" value="10" required>
+      </label>
+      <p class="muted">Compte aussi les joueurs que tu as déjà invités. Ils pourront prendre leur place avec le lien du match.</p>
+      <label>Prix par joueur (€) <input name="prix" type="number" min="0" max="1000" step=".01" value="15" required></label>
+      <button class="btn">Publier le Five</button>
+    </form>
+    <p id="organiser-message" role="status"></p>
+    <div id="organiser-liens" class="actions"></div>
+  </main>
+</body>
+</html>

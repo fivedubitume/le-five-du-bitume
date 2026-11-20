@@ -53,7 +53,10 @@ function demarrerJoueur() {
   let ficheBloquee = false;
   let selection = null;
   let liberationValidee = false;
-  let retraitDirect = new URLSearchParams(location.search).get("retrait") === "1";
+  const parametres = new URLSearchParams(location.search);
+  let retraitDirect = parametres.get("retrait") === "1";
+  const matchDemande = parametres.get("match");
+  const boutonsMatchs = new Map();
 
   async function lireProfil() {
     const { data: { session }, error } = await client.auth.getSession();
@@ -107,6 +110,7 @@ function demarrerJoueur() {
     }
 
     liste.replaceChildren();
+    boutonsMatchs.clear();
     if (matchs.length === 0) liste.textContent = 'Aucun match à venir.';
     for (const match of matchs) {
       const ligne = document.createElement('div');
@@ -127,6 +131,7 @@ function demarrerJoueur() {
       bouton.className = 'btn';
       bouton.textContent = "Je prends ma place";
       bouton.addEventListener('click', () => ouvrirFormulaire(match));
+      boutonsMatchs.set(match.id, bouton);
       ligne.append(infos, bouton);
       liste.append(ligne);
     }
@@ -243,7 +248,11 @@ function demarrerJoueur() {
     profil = await lireProfil();
     message.textContent = "";
     await chargerMatchs();
-    if (retraitDirect) liste.querySelector("button")?.click();
+    if (matchDemande) {
+      const bouton = boutonsMatchs.get(matchDemande);
+      if (bouton) bouton.click();
+      else message.textContent = 'Ce Five n’est plus disponible. Tu peux choisir un autre match.';
+    } else if (retraitDirect) liste.querySelector("button")?.click();
   })().catch(erreur => {
     message.textContent = erreur.message || 'Impossible de charger les matchs.';
   });

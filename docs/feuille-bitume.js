@@ -72,7 +72,7 @@ async function chargerFeuille() {
     const feuille = document.createElement('section');
     feuille.className = 'feuille-panneau';
     feuille.setAttribute('aria-label', 'Feuille de match');
-    feuille.innerHTML = '<div class="feuille-entete"><img src="logo.PNG" alt=""><div><h2>Feuille de match</h2><p></p></div></div>';
+    feuille.innerHTML = '<div class="feuille-entete"><img src="logo.PNG" alt=""><div><h2>Feuille du prochain Five</h2><p></p></div></div>';
     feuille.querySelector('p').textContent = `${match.joueurs.length}/${match.capacity} inscrits`;
     const liste = document.createElement('ul');
     liste.className = 'feuille-maillots';
