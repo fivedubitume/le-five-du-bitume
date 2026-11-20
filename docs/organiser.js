@@ -56,7 +56,7 @@ formulaireFive.addEventListener('submit', async event => {
       masquerProfilOrganisation();
     }
     const { data: match, error } = await clientOrganisation.rpc('organiser_five', {
-      p_titre: champs.titre.value, p_lieu: champs.terrain.value,
+      p_titre: 'Five du Bitume', p_lieu: champs.terrain.value,
       p_debut: debut.toISOString(), p_places: champs.places.valueAsNumber,
       p_prix: Math.round(champs.prix.valueAsNumber * 100), p_demande: demandeOrganisation
     });

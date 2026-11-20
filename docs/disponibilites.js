@@ -95,7 +95,7 @@ async function afficherProchainFive() {
     function afficherSelection() {
       const match = matchs.find(item => item.id === select.value);
       info.textContent = match
-        ? [dateFive.format(new Date(match.starts_at)), heureFive.format(new Date(match.starts_at)), textePlaces(match.places_restantes)].join(' · ')
+        ? [match.id === matchs[0].id ? 'Prochain Five' : 'Five sélectionné', dateFive.format(new Date(match.starts_at)), heureFive.format(new Date(match.starts_at)), textePlaces(match.places_restantes)].join(' · ')
         : 'Aucun Five programmé pour le moment.';
       if (lieu) afficherTerrainFive(lieu, match?.venue);
       const id = match ? encodeURIComponent(match.id) : '';

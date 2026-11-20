@@ -77,21 +77,29 @@
 }
 
 
-@media (max-width: 650px) {
+@media (max-width: 900px) {
   header .bar { gap: 5px; padding: 7px 0; min-height: 0; }
   header .club-logo { width: 34px; height: 34px; }
   header nav {
     width: 100%;
-    flex-wrap: nowrap;
-    overflow-x: auto;
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 3px;
   }
   header nav a {
-    flex: 0 0 auto;
-    white-space: nowrap;
+    display: grid;
+    place-items: center;
+    min-height: 44px;
+    text-align: center;
+    white-space: normal;
+    overflow-wrap: anywhere;
     font-size: .78rem;
     padding: 6px 7px;
   }
 
+}
+
+@media (max-width: 650px) {
   .hero.hero-five.hero-photo { gap: 9px; padding: 11px; }
   .hero-photo-colonne::before { aspect-ratio: 2.4; }
   .hero-photo .hero-five-intro .tag { font-size: .68rem; margin: 0 0 3px; }

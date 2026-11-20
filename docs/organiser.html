@@ -8,7 +8,7 @@
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.89.0/dist/umd/supabase.js" defer></script>
   <script src="supabase-config.js" defer></script>
   <script src="disponibilites.js?v=terrains" defer></script>
-  <script src="organiser.js?v=terrains" defer></script>
+  <script src="organiser.js?v=menu-mobile" defer></script>
 </head>
 <body>
   <main class="wrap">
@@ -20,13 +20,11 @@
         <label>Ton vrai prénom <input name="prenom" autocomplete="given-name" maxlength="60" required></label>
         <label>Ton numéro de téléphone <input name="telephone" type="tel" autocomplete="tel" required></label>
       </div>
-      <label>Nom du match <input name="titre" maxlength="60" required></label>
       <div id="terrains-organiser"></div>
-      <label>Date et heure (heure de ton appareil) <input name="debut" type="datetime-local" required></label>
+      <label>Date et heure <input name="debut" type="datetime-local" required></label>
       <label>Nombre total de places à inscrire sur le site
         <input name="places" type="number" min="2" max="120" value="10" required>
       </label>
-      <p class="muted">Compte aussi les joueurs que tu as déjà invités. Ils pourront prendre leur place avec le lien du match.</p>
       <label>Prix par joueur (€) <input name="prix" type="number" min="0" max="1000" step=".01" value="15" required></label>
       <button class="btn">Publier le Five</button>
     </form>
