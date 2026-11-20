@@ -1,0 +1,40 @@
+#vote-five { padding: clamp(12px, 3vw, 26px); }
+
+.vote-bandeau {
+  position: relative;
+  isolation: isolate;
+  display: grid;
+  align-items: center;
+  min-height: clamp(160px, 48vw, 320px);
+  padding: clamp(10px, 3vw, 32px);
+  overflow: hidden;
+  border: 0;
+  border-radius: 12px;
+  background: #101611;
+}
+
+.vote-bandeau img {
+  position: absolute;
+  inset: 0;
+  z-index: -2;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: right center;
+}
+
+.vote-bandeau::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  background: linear-gradient(90deg, #0b100eee 0%, #0b100e99 35%, transparent 63%);
+}
+
+.vote-bandeau h1 {
+  max-width: 45%;
+  margin: 0;
+  font-size: clamp(1.35rem, 4.7vw, 3.8rem);
+  line-height: 1.07;
+  text-shadow: 0 2px 8px #000;
+}

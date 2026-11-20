@@ -155,7 +155,7 @@ function render() {
   const pages = {
     accueil: home,
     classements: afficherClassements,
-    vote: () => '<section class="card" id="vote-five"><h1>Vote pour l’homme du match</h1></section><section class="card section" id="notes-five"><h2>Noter les joueurs</h2></section>',
+    vote: () => '<section class="card" id="vote-five"><header class="vote-bandeau"><img src="trophee-bitume.webp" alt="Un joueur du Bitume reçoit le trophée de son coéquipier" width="1280" height="720" decoding="async"><h1>Vote pour l’homme du match</h1></header></section><section class="card section" id="notes-five"><h2>Noter les joueurs</h2></section>',
     cartons: () => '<h1>Les cartons des joueurs</h1><section class="card" id="cartons-five">Chargement…</section>'
   };
   const page = Object.hasOwn(pages, route) ? route : 'accueil';
