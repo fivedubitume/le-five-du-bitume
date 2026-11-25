@@ -173,6 +173,10 @@ function afficherGestionAdmin(token) {
       }
     }
 
+    const age = Date.now() - Date.parse(match.starts_at);
+    if (joueur.statut === 'confirmed' && age >= 0 && age < 48*3600000)
+      actions.append(new Option('Créer un lien de vote privé', 'lien_vote'));
+
     if (joueur.numero) {
       actions.append(new Option(
         joueur.bloque ? 'Débloquer le numéro' : 'Exclure du groupe · bloquer ce numéro',
@@ -192,6 +196,14 @@ function afficherGestionAdmin(token) {
       actions.value = '';
       if (action === '' || enCours) return;
 
+      if (action === 'lien_vote') {
+        historiqueRpc('lien_vote_prive', {p_match:match.id,p_joueur:joueur.id}).then(cle => {
+          const lien = new URL('bulletin.html', location.href);
+          lien.hash = cle;
+          window.prompt('Copie ce lien privé pour ' + joueur.prenom + ' uniquement.', lien.href);
+        }).catch(afficherErreur);
+        return;
+      }
       if (['blanc', 'jaune', 'rouge', 'enlever_carton'].includes(action)) {
         modifierCarton(action, joueur);
         return;
