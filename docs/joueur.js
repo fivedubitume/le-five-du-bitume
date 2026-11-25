@@ -145,11 +145,8 @@ function demarrerJoueur() {
     event.preventDefault();
     if (selection === null) return;
     const match = selection;
-    let numero = inscription.elements.telephone.value.trim().replace(/[\s.()-]/g, "");
-    if (/^0[1-9][0-9]{8}$/.test(numero)) numero = "+33" + numero.slice(1);
-    else if (numero.startsWith("00")) numero = "+" + numero.slice(2);
-
-    const numeroDifferent = Boolean(profil && numero !== profil.phone);
+    const numero = normaliserTelephoneFive(inscription.elements.telephone.value);
+    const numeroDifferent = Boolean(profil && numero !== normaliserTelephoneFive(profil.phone));
     const nouveauNumeroPourReservation = retraitDirect === false && numeroDifferent;
 
     if (retraitDirect && numeroDifferent) {
@@ -203,7 +200,7 @@ function demarrerJoueur() {
 
         const { error: erreurProfil } = await client.rpc('creer_profil_joueur', {
           p_prenom: champs.get('prenom'),
-          p_telephone: champs.get('telephone')
+          p_telephone: numero
         });
         if (erreurProfil) throw erreurProfil;
         profil = await lireProfil();

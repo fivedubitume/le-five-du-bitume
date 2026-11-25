@@ -27,7 +27,14 @@ function initialiserVoteFive() {
   const envoyer = document.createElement('button');
   envoyer.className = 'btn';
   envoyer.textContent = 'Valider mon vote';
-  choix.append(label, envoyer);
+  const numero = document.createElement('input');
+  numero.type = 'tel';
+  numero.autocomplete = 'tel';
+  numero.required = true;
+  const identite = document.createElement('label');
+  identite.textContent = 'Ton numéro de téléphone utilisé à l’inscription';
+  identite.append(numero);
+  choix.append(identite, label, envoyer);
   carte.append(date, compte, action, choix, message);
 
   let match;
@@ -98,7 +105,7 @@ function initialiserVoteFive() {
         ...resultat.candidats.map(joueur => new Option(joueur.prenom, joueur.id)));
       choix.hidden = false;
       actualiserCompte();
-      if (!choix.hidden) candidats.focus();
+      if (!choix.hidden) numero.focus();
     } catch (erreur) {
       message.textContent = erreur.message || 'Impossible d’ouvrir le vote.';
     } finally {
@@ -111,6 +118,14 @@ function initialiserVoteFive() {
     envoyer.disabled = true;
     message.textContent = '';
     try {
+      const {data: {session}, error: erreurSession} = await clientVoteFive.auth.getSession();
+      if (erreurSession) throw erreurSession;
+      if (!session) throw new Error('Ouvre le vote depuis le navigateur de ton inscription.');
+      const {data: profil, error} = await clientVoteFive.from('profiles')
+        .select('phone').eq('id',session.user.id).single();
+      if (error) throw error;
+      if (!profil?.phone || normaliserTelephoneFive(numero.value) !== normaliserTelephoneFive(profil.phone))
+        throw new Error('Vérifie le numéro utilisé pour réserver ta place.');
       const resultat = await appeler(candidats.value);
       afficherConfirmation(resultat.statut);
     } catch (erreur) {

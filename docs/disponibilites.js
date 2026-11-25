@@ -66,3 +66,11 @@ function textePlaces(nombre) {
   if (nombre === 0) return 'Complet · liste d’attente ouverte';
   return nombre === 1 ? '1 place restante' : `${nombre} places restantes`;
 }
+
+function normaliserTelephoneFive(valeur) {
+  let numero = String(valeur ?? '').normalize('NFKC')
+    .replace(/[\s.()\-\u061c\u200b-\u200f\u202a-\u202e\u2060\u2066-\u2069\ufeff]/gu, '');
+  if (numero.startsWith('00')) numero = '+' + numero.slice(2);
+  if (/^0[1-9]\d{8}$/.test(numero)) numero = '+33' + numero.slice(1);
+  return numero;
+}

@@ -51,7 +51,7 @@ formulaireFive.addEventListener('submit', async event => {
     if (!champsProfilFive.hidden) {
       const { error } = await clientOrganisation.rpc('creer_profil_joueur', {
         p_prenom: champs.prenom.value.trim(),
-        p_telephone: champs.telephone.value
+        p_telephone: normaliserTelephoneFive(champs.telephone.value)
       });
       if (error) throw error;
       masquerProfilOrganisation();
