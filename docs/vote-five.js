@@ -85,7 +85,12 @@ function initialiserVoteFive() {
     termine = true;
     choix.hidden = true;
     action.hidden = true;
-    message.textContent = statut === 'enregistre' ? 'Ton vote est enregistré.' : 'Tu as déjà voté pour ce Five.';
+    message.classList.add('vote-recu');
+    message.textContent = statut === 'enregistre'
+      ? '✓ Ton vote a été validé ! Ta voix compte pour ce Five.'
+      : '✓ Tu as déjà voté. Ta voix est comptabilisée pour ce Five.';
+    message.tabIndex = -1;
+    message.focus();
   }
 
   action.addEventListener('click', async () => {
@@ -118,15 +123,16 @@ function initialiserVoteFive() {
     envoyer.disabled = true;
     message.textContent = '';
     try {
-      const {data: {session}, error: erreurSession} = await clientVoteFive.auth.getSession();
-      if (erreurSession) throw erreurSession;
-      if (!session) throw new Error('Ouvre le vote depuis le navigateur de ton inscription.');
-      const {data: profil, error} = await clientVoteFive.from('profiles')
-        .select('phone').eq('id',session.user.id).single();
+      message.classList.remove('vote-recu');
+      message.textContent = 'Enregistrement du vote…';
+      const id = match.match_id;
+      const { data: resultat, error } = await clientVoteFive.rpc('valider_vote_bitume', {
+        p_match: id, p_candidat: candidats.value, p_numero: normaliserTelephoneFive(numero.value)
+      });
+      if (match?.match_id !== id) return;
       if (error) throw error;
-      if (!profil?.phone || normaliserTelephoneFive(numero.value) !== normaliserTelephoneFive(profil.phone))
-        throw new Error('Vérifie le numéro utilisé pour réserver ta place.');
-      const resultat = await appeler(candidats.value);
+      if (!['enregistre', 'deja_vote'].includes(resultat?.statut))
+        throw new Error('Le serveur n’a pas confirmé ton vote. Réessaie.');
       afficherConfirmation(resultat.statut);
     } catch (erreur) {
       message.textContent = erreur.message || 'Impossible d’enregistrer le vote.';
@@ -142,6 +148,7 @@ function initialiserVoteFive() {
       if (error) throw error;
       const prochain = data[0];
       if (prochain?.match_id !== match?.match_id) {
+        message.classList.remove('vote-recu');
         termine = false;
         choix.hidden = true;
         message.textContent = '';

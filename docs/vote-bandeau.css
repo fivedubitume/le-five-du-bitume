@@ -38,3 +38,13 @@
   line-height: 1.07;
   text-shadow: 0 2px 8px #000;
 }
+
+#vote-five .vote-recu {
+  padding: 1rem;
+  border: 1px solid #83b644;
+  border-inline-start: 5px solid #cafa61;
+  border-radius: 12px;
+  background: #1d3324;
+  color: #e4ffb4;
+  font-weight: 700;
+}
