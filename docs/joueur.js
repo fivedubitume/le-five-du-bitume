@@ -52,7 +52,6 @@ function demarrerJoueur() {
   let profil = null;
   let ficheBloquee = false;
   let selection = null;
-  let liberationValidee = false;
   const parametres = new URLSearchParams(location.search);
   let retraitDirect = parametres.get("retrait") === "1";
   const matchDemande = parametres.get("match");
@@ -75,7 +74,6 @@ function demarrerJoueur() {
 
   function ouvrirFormulaire(match) {
     selection = match;
-    liberationValidee = false;
     inscription.reset();
     equipeChoisie = null;
     suggestions.replaceChildren();
@@ -173,64 +171,58 @@ function demarrerJoueur() {
         return;
       }
     }
-    if (statut && liberationValidee === false && retraitDirect === false) {
-      liberationValidee = true;
-      message.textContent = statut === "confirmed"
-        ? "Tu es déjà inscrit à ce match." : "Tu es déjà en liste d’attente.";
-      valider.textContent = statut === "confirmed"
-        ? "Libérer ma place" : "Quitter la liste d’attente";
-      return;
-    }
     let actionTerminee = false;
     valider.disabled = true;
     message.textContent = 'Mise à jour en cours…';
 
     try {
-      if (profil === null || nouveauNumeroPourReservation) {
-        const champs = new FormData(inscription);
-        const { data: { session }, error } = await client.auth.getSession();
+      let reservation;
+      if (retraitDirect) {
+        reservation = await client.rpc('liberer_match', { p_match_id: match.id });
+      } else {
+        const prenom = inscription.elements.prenom.value.trim();
+        const {data: {session}, error} = await client.auth.getSession();
         if (error) throw error;
-        if (session === null || nouveauNumeroPourReservation || ficheBloquee) {
-
-          const { error: erreurConnexion } = await client.auth.signInAnonymously();
-          if (erreurConnexion) throw erreurConnexion;
-          profil = null;
-          ficheBloquee = false;
+        if (!session) {
+          const connexion = await client.auth.signInAnonymously();
+          if (connexion.error) throw connexion.error;
         }
-
-        const { error: erreurProfil } = await client.rpc('creer_profil_joueur', {
-          p_prenom: champs.get('prenom'),
-          p_telephone: numero
+        const reserver = () => client.rpc('inscrire_fiche_five', {
+          p_match: match.id, p_prenom: prenom, p_telephone: numero, p_equipe: equipeChoisie?.id ?? null
         });
-        if (erreurProfil) throw erreurProfil;
-        profil = await lireProfil();
-        if (profil === null) throw new Error('Fiche joueur introuvable.');
-
-
+        reservation = await reserver();
+        if (!reservation.error && reservation.data === 'nouvelle_fiche') {
+          if (nouveauNumeroPourReservation) {
+            const connexion = await client.auth.signInAnonymously();
+            if (connexion.error) throw connexion.error;
+            profil = null;
+          }
+          const creation = await client.rpc('creer_profil_joueur', {p_prenom: prenom,p_telephone: numero});
+          reservation = await reserver();
+          if (reservation.data === 'nouvelle_fiche')
+            throw creation.error || new Error('Impossible de créer la fiche joueur.');
+          profil = await lireProfil();
+        }
       }
-
-      const reservation = statut
-        ? await client.rpc('liberer_match', { p_match_id: match.id })
-        : await client.rpc('reserver_five_avec_maillot', {
-          p_match_id: match.id,
-          p_equipe: equipeChoisie?.id ?? null,
-          p_numero: null
-        });
       if (reservation.error) throw reservation.error;
       const { data } = reservation;
+      const retrait = retraitDirect;
+      if (!retrait && !['confirmed','deja_confirme','waitlist'].includes(data))
+        throw new Error('Réservation non confirmée. Vérifie ta place sur la feuille du match.');
       actionTerminee = true;
       retraitDirect = false;
 
       inscription.hidden = true;
       selection = null;
-      message.textContent = statut ? 'Inscription retirée.'
+      message.textContent = retrait ? 'Inscription retirée.'
+        : data === 'deja_confirme' ? 'Tu as déjà une place confirmée pour ce Five.'
         : data === 'confirmed' ? 'Inscription validée. Retour à l’accueil…' : 'Tu es en liste d’attente.';
       if ('BroadcastChannel' in window) {
         const canal = new BroadcastChannel('bitume-matchs');
         canal.postMessage('actualiser');
         canal.close();
       }
-      if (!statut && data === 'confirmed') {
+      if (!retrait && ['confirmed','deja_confirme'].includes(data)) {
         setTimeout(() => location.assign('index.html'), 1400);
         return;
       }
