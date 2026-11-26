@@ -174,7 +174,7 @@ function afficherGestionAdmin(token) {
     }
 
     const age = Date.now() - Date.parse(match.starts_at);
-    if (joueur.statut === 'confirmed' && age >= 0 && age < 48*3600000)
+    if (joueur.statut === 'confirmed' && age >= 0 && age < 24*3600000)
       actions.append(new Option('Créer un lien de vote privé', 'lien_vote'));
 
     if (joueur.numero) {

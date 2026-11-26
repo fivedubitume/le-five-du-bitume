@@ -48,3 +48,14 @@
   color: #e4ffb4;
   font-weight: 700;
 }
+
+#votes-accueil:not([hidden]) {
+  display: grid;
+  gap: .5rem;
+  margin-bottom: 1rem;
+  padding: .85rem 1rem;
+  border-inline-start: 3px solid #cafa61;
+  background: #19291d;
+  border-radius: .7rem;
+}
+#votes-accueil a { color: #d3ff84; padding-block: .4rem; }

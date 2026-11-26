@@ -81,7 +81,7 @@ function reglesDuGroupe() {
         </li>
         <li>
           <h3>Vote pour l’homme du match</h3>
-          <p>Le vote s’ouvre au coup d’envoi et reste accessible pendant 48 heures. Chaque joueur dont la place est confirmée peut voter une fois par Five, avec son numéro de téléphone. En cas d’égalité, les gagnants sont ex æquo.</p>
+          <p>Le vote s’ouvre au coup d’envoi et reste accessible pendant 24 heures. Chaque joueur dont la place est confirmée peut voter une fois par Five, avec son numéro de téléphone. En cas d’égalité, les gagnants sont ex æquo.</p>
         </li>
         <li>
           <h3>Classements</h3>
@@ -98,7 +98,7 @@ function reglesDuGroupe() {
 }
 
 function home() {
-  return `<h1 class="titre-calendrier">Les prochains Five</h1><template id="modele-match"><section class="hero hero-five hero-photo"><div class="hero-photo-colonne"><div class="hero-photo-cadre"><img class="hero-photo-joueurs" src="joueurs-bitume.webp" alt="Deux joueurs du Five du Bitume en action sur un terrain indoor" width="1672" height="941" fetchpriority="high"></div><div class="hero-five-intro"><p class="tag">Football à 5</p><h2 class="date-match"></h2><p class="places-match"></p><div class="terrain-five"></div><div class="actions"><a class="btn" data-reserver href="joueur.html">Je prends ma place</a> <a class="btn alt" data-retirer href="joueur.html?retrait=1">Je retire ma place</a></div></div></div><div class="feuille-match"></div></section></template><div id="calendrier-accueil">Chargement des matchs…</div>`;
+  return `<h1 class="titre-calendrier">Les prochains Five</h1><template id="modele-match"><section class="hero hero-five hero-photo"><div class="hero-photo-colonne"><div class="hero-photo-cadre"><img class="hero-photo-joueurs" src="joueurs-bitume.webp" alt="Deux joueurs du Five du Bitume en action sur un terrain indoor" width="1672" height="941" fetchpriority="high"></div><div class="hero-five-intro"><p class="tag">Football à 5</p><h2 class="date-match"></h2><p class="places-match"></p><div class="terrain-five"></div><div class="actions"><a class="btn" data-reserver href="joueur.html">Je prends ma place</a> <a class="btn alt" data-retirer href="joueur.html?retrait=1">Je retire ma place</a></div></div></div><div class="feuille-match"></div></section></template><section id="votes-accueil" hidden aria-label="Vote pour l’homme du match"></section><div id="calendrier-accueil">Chargement des matchs…</div>`;
 }
 function summary(m) {
   if (m.open) return '<p class="muted">Votes en cours</p>';

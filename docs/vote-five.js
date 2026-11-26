@@ -33,7 +33,7 @@ function initialiserVoteFive() {
     const debut = Date.parse(m.debut);
     const maintenant = Date.now()+decalage;
     const attente = maintenant<debut;
-    const secondes = Math.max(0,Math.ceil(((attente?debut:debut+48*3600000)-maintenant)/1000));
+    const secondes = Math.max(0,Math.ceil(((attente?debut:debut+24*3600000)-maintenant)/1000));
     date.textContent = libelle(m);
     compte.textContent = secondes ? (attente?'Ouverture':'Clôture')+' du vote dans '+Math.floor(secondes/3600)+' h '+Math.floor(secondes%3600/60)+' min '+secondes%60+' s' : 'Vote terminé.';
     form.hidden = attente || !secondes || recus.has(m.id) || !m.candidats.length;
@@ -92,3 +92,51 @@ function initialiserVoteFive() {
 initialiserVoteFive();
 window.addEventListener('hashchange',initialiserVoteFive);
 window.addEventListener('pageshow',initialiserVoteFive);
+
+function initialiserVotesAccueil() {
+  const section = document.querySelector('#votes-accueil');
+  if (!section || section.dataset.initialise) return;
+  section.dataset.initialise = 'true';
+  let matchs = [], decalage = 0, chargement = false;
+  function afficher() {
+    const maintenant = Date.now() + decalage;
+    const ouverts = matchs.filter(m => maintenant < Date.parse(m.fin));
+    section.hidden = ouverts.length === 0;
+    const lignes = ouverts.map(m => {
+      const minutes = Math.ceil((Date.parse(m.fin) - maintenant) / 60000);
+      const lien = document.createElement('a');
+      lien.href = '#vote';
+      const date = new Date(m.debut).toLocaleString('fr-FR', {
+        timeZone: 'Europe/Paris', dateStyle: 'short', timeStyle: 'short'
+      });
+      lien.textContent = date + ' · ' + (m.lieu || 'Five') + ' · Fin du vote dans ' +
+        Math.floor(minutes / 60) + ' h ' + String(minutes % 60).padStart(2, '0') + ' min';
+      return lien;
+    });
+    const titre = document.createElement('strong');
+    titre.textContent = 'Vote pour l’homme du match';
+    const contenu = [titre, ...lignes];
+    if (section.textContent !== contenu.map(el => el.textContent).join(''))
+      section.replaceChildren(...contenu);
+  }
+  async function charger() {
+    if (chargement || !section.isConnected) return;
+    chargement = true;
+    try {
+      const liste = await rpcHistorique('podium_matchs_five');
+      if (liste.length) decalage = Date.parse(liste[0].serveur) - Date.now();
+      matchs = liste;
+      afficher();
+    } catch { afficher(); }
+    finally { chargement = false; }
+  }
+  setTimeout(charger, 0);
+  const lecture = setInterval(charger, 30000);
+  const horloge = setInterval(() => {
+    if (section.isConnected) afficher();
+    else { clearInterval(lecture); clearInterval(horloge); }
+  }, 1000);
+}
+initialiserVotesAccueil();
+window.addEventListener('hashchange', initialiserVotesAccueil);
+window.addEventListener('pageshow', initialiserVotesAccueil);
