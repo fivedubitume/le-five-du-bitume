@@ -156,68 +156,63 @@ function lignesPodium(joueurs) {
 }
 
 function afficherPodium(zone) {
-  zone.innerHTML = `<label data-filtre hidden>Match<select></select></label>
-    <p data-info role="status">Chargement…</p>
-    <div data-podium hidden><div class="podium-horloge"><span data-legende></span>
-    <strong data-valeur></strong><small data-date></small></div>
-    <h2 data-titre></h2><ol class="podium-liste" data-rangs></ol><p data-vide></p></div>
-    <details class="podium-cumul" open><summary>Votes cumulés</summary><ol class="podium-liste"></ol><p></p></details>`;
-  const champ = zone.querySelector('select');
-  const trouver = nom => zone.querySelector('[data-'+nom+']');
-  const cumul = zone.querySelector('details');
-  const format = new Intl.DateTimeFormat('fr-FR',{day:'numeric',month:'short',hour:'2-digit',minute:'2-digit',timeZone:'Europe/Paris'});
-  const libelle = m => format.format(new Date(m.debut)) + (m.lieu ? ' · '+m.lieu : '');
-  let matchs = [], decalage = 0, enCours = false;
-  function montrer() {
-    const m = matchs.find(item=>item.id===champ.value);
-    trouver('podium').hidden = !m;
-    if (!m) return;
-    const minutes = Math.max(0,Math.ceil((Date.parse(m.fin)-Date.now()-decalage)/60000));
-    const gagnants = m.joueurs.filter(j=>j.voix===m.joueurs[0]?.voix);
-    trouver('legende').textContent = minutes ? 'Fin des votes' : gagnants.length>1 ? 'Hommes du match · ex æquo' : gagnants.length ? 'Homme du match' : 'Vote terminé';
-    trouver('valeur').textContent = minutes ? Math.floor(minutes/60)+' h '+String(minutes%60).padStart(2,'0')+' min'
-      : gagnants.map(j=>j.prenom).join(' & ') || 'Aucun vote';
-    trouver('date').textContent = libelle(m);
-    trouver('titre').textContent = minutes ? 'Classement provisoire du match' : 'Classement final du match';
-    trouver('rangs').replaceChildren(...lignesPodium(m.joueurs));
-    trouver('vide').textContent = minutes && !m.joueurs.length ? 'En attente du premier vote.' : '';
+  const definitif = zone.dataset.classement === 'palmares';
+  zone.innerHTML = '<select aria-label="Choisir le match" hidden></select><p role="status"></p><ol class="podium-liste"></ol>';
+  const choix = zone.querySelector('select');
+  const info = zone.querySelector('p');
+  const liste = zone.querySelector('ol');
+  let matchs = [], decalage = 0, occupe = false;
+  function afficher() {
+    const precedent = choix.value;
+    const ouverts = matchs.filter(m => Date.parse(m.fin) > Date.now() + decalage);
+    choix.replaceChildren(...ouverts.map(m => new Option(new Date(m.debut).toLocaleString('fr-FR',
+      {dateStyle:'short',timeStyle:'short',timeZone:'Europe/Paris'}) + ' · ' + m.lieu, m.id)));
+    if (ouverts.some(m => m.id === precedent)) choix.value = precedent;
+    choix.hidden = ouverts.length < 2;
+    const m = ouverts.find(item => item.id === choix.value);
+    liste.replaceChildren(...lignesPodium(m?.joueurs || []));
+    if (!m) { info.textContent = 'Aucun vote en cours.'; return; }
+    const minutes = Math.ceil((Date.parse(m.fin) - Date.now() - decalage) / 60000);
+    info.textContent = 'Homme du match · ' + choix.selectedOptions[0].text + ' · Fin des votes dans ' +
+      Math.floor(minutes/60) + ' h ' + minutes%60 + ' min' + (m.joueurs.length ? '' : ' · En attente du premier vote.');
   }
-  async function actualiser() {
-    if (enCours) return;
-    enCours=true;
+  async function charger() {
+    if (occupe) return;
+    occupe = true;
     try {
-      await Promise.all([
-        rpcHistorique('podium_matchs_five').then(data=>{
-          const precedent=champ.value;
-          matchs=data;
-          if(data.length) decalage=Date.parse(data[0].serveur)-Date.now();
-          if (JSON.stringify(data.map(libelle))!==champ.dataset.libelles || data.map(m=>m.id).join(',')!==champ.dataset.ids) {
-            champ.replaceChildren(...data.map(m=>new Option(libelle(m),m.id)));
-            champ.dataset.libelles=JSON.stringify(data.map(libelle));
-            champ.dataset.ids=data.map(m=>m.id).join(',');
-            if(data.some(m=>m.id===precedent)) champ.value=precedent;
-          }
-          trouver('filtre').hidden=data.length<2;
-          trouver('info').textContent=data.length?'':'Le classement apparaîtra au premier coup d’envoi.';
-          montrer();
-        }).catch(()=>{trouver('info').textContent='Actualisation du match indisponible.';}),
-        rpcHistorique('voix_homme_du_match').then(joueurs=>{
-          cumul.querySelector('ol').replaceChildren(...lignesPodium(joueurs));
-          cumul.querySelector('p').textContent=joueurs.length?'':'Aucune voix enregistrée.';
-        }).catch(()=>{cumul.querySelector('p').textContent='Actualisation des votes cumulés indisponible.';})
-      ]);
-    } finally {enCours=false;}
+      if (definitif) {
+        const joueurs = await rpcHistorique('palmares_hdm');
+        let rang = 0;
+        liste.replaceChildren(...joueurs.map((j,i) => {
+          if (!i || j.points !== joueurs[i-1].points) rang = i+1;
+          const ligne = document.createElement('li');
+          if (rang === 1) ligne.className = 'podium-premier';
+          ligne.append(elementHistorique('span',String(rang)), elementHistorique('strong',j.prenom),
+            elementHistorique('b',j.points + (j.points > 1 ? ' points' : ' point')));
+          return ligne;
+        }));
+        info.textContent = joueurs.length ? '1 élection = 1 point' : 'Aucun homme du match élu pour le moment.';
+      } else {
+        matchs = await rpcHistorique('podium_matchs_five');
+        if (matchs.length) decalage = Date.parse(matchs[0].serveur)-Date.now();
+        afficher();
+      }
+    } catch { info.textContent = 'Classement temporairement indisponible.'; }
+    finally { occupe = false; }
   }
-  champ.onchange=montrer;
-  actualiser();
-  const suivi=setInterval(()=>{if(!zone.isConnected) clearInterval(suivi); else if(!document.hidden) actualiser();},15000);
+  choix.onchange = afficher;
+  charger();
+  const suivi = setInterval(() => {
+    if (!zone.isConnected) clearInterval(suivi);
+    else if (!document.hidden) charger();
+  },10000);
 }
 
 function initialiserHistoriqueFive() {
   const classement = document.querySelector('#historique-five');
   const cartons = document.querySelector('#cartons-five');
   const notes = document.querySelector('#notes-five');
-  if (classement?.dataset.classement === 'homme-du-match') {
+  if (['homme-du-match','palmares'].includes(classement?.dataset.classement)) {
     afficherPodium(classement);
   } else if (classement) rpcHistorique('classements_five').then(data => afficherClassementReel(classement, data))
     .catch(() => { classement.textContent = 'Classement temporairement indisponible.'; });

@@ -139,14 +139,14 @@ function admin() {
 function afficherClassements(categorie) {
   const criteres = [
     { id: 'victoires', nom: 'Victoires' },
-    { id: 'homme-du-match', nom: 'Homme du match' },
-    { id: 'moyenne', nom: 'Note moyenne' }
+    { id: 'homme-du-match', nom: 'Classement hommes du match provisoire' },
+    { id: 'palmares', nom: 'Classement homme du match définitif' }
   ];
   const actif = criteres.find(critere => critere.id === categorie) ?? criteres[0];
   const liens = criteres.map(critere =>
     `<a class="btn ${critere === actif ? '' : 'alt'}" href="#classements/${critere.id}"${critere === actif ? ' aria-current="page"' : ''}>${critere.nom}</a>`
   ).join('');
-  return `<section class="classements-ensemble"><div class="classements-bandeau"><h1>Classements</h1><div class="actions classements-filtres" role="group" aria-label="Filtres du classement">${liens}</div></div><section class="card classements-resultats">${actif.id === 'homme-du-match' ? '' : '<h2>'+actif.nom+'</h2>'}<div id="historique-five" data-classement="${actif.id}">Chargement…</div></section></section>`;
+  return `<section class="classements-ensemble"><div class="classements-bandeau"><h1>Classements</h1><div class="actions classements-filtres" role="group" aria-label="Filtres du classement">${liens}</div></div><section class="card classements-resultats">${actif.id === 'homme-du-match' ? '' : '<h2>'+(actif.id === 'palmares' ? 'Classement homme du match définitif' : actif.nom)+'</h2>'}<div id="historique-five" data-classement="${actif.id}">Chargement…</div></section></section>`;
 }
 
 function render() {

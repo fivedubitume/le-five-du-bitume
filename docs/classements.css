@@ -73,3 +73,5 @@
 .podium-cumul { margin-top:1.3rem; border-top:1px solid #344137; }
 .podium-cumul summary { cursor:pointer; font-weight:700; padding:.85rem 0; }
 #historique-five p:empty { display:none; }
+
+.classements-filtres .btn { white-space: normal; overflow-wrap: anywhere; min-width: 0; }
