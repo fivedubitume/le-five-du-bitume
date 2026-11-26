@@ -85,7 +85,7 @@ function reglesDuGroupe() {
         </li>
         <li>
           <h3>Classements</h3>
-          <p>Les victoires, les titres d’homme du match et les notes moyennes sur 10 sont comptabilisés depuis le premier Five, sans remise à zéro annuelle.</p>
+          <p>Dès que le score est enregistré, chaque joueur de l’équipe gagnante reçoit 3 points. En cas de nul, chacun reçoit 1 point. Une défaite rapporte 0 point et le joueur figure au classement. Les points se cumulent depuis le premier Five. Chaque titre d’homme du match vaut 1 point dans son propre classement.</p>
         </li>
         <li>
           <h3>Réservation du terrain</h3>
@@ -138,7 +138,7 @@ function admin() {
 }
 function afficherClassements(categorie) {
   const criteres = [
-    { id: 'victoires', nom: 'Victoires' },
+    { id: 'victoires', nom: 'Points' },
     { id: 'homme-du-match', nom: 'Classement hommes du match provisoire' },
     { id: 'palmares', nom: 'Classement homme du match définitif' }
   ];

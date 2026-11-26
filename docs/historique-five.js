@@ -18,25 +18,16 @@ async function rpcHistorique(nom, argumentsRpc = {}, token) {
   return data;
 }
 
-function afficherClassementReel(zone, lignes) {
-  const indicateurs = { victoires: 'victoires', 'homme-du-match': 'titres', moyenne: 'moyenne' };
-  const indicateur = indicateurs[zone.dataset.classement];
-  const joueurs = lignes.filter(joueur => joueur[indicateur] !== null &&
-      (indicateur === 'moyenne' || joueur[indicateur] > 0))
-    .sort((a, b) => Number(b[indicateur]) - Number(a[indicateur]) ||
-      (a.prenom || '').localeCompare(b.prenom || '', 'fr'));
-  zone.replaceChildren();
-  if (!joueurs.length) zone.textContent = 'Aucun classement disponible pour le moment.';
+function afficherClassementReel(zone, joueurs) {
+  zone.replaceChildren(elementHistorique('p', 'Victoire · 3 pts　 Nul · 1 pt　 Défaite · 0 pt'));
+  if (!joueurs.length) zone.append(elementHistorique('p', 'En attente du premier résultat.'));
   let rang = 0;
   joueurs.forEach((joueur, index) => {
-    if (!index || Number(joueur[indicateur]) !== Number(joueurs[index - 1][indicateur])) rang = index + 1;
+    if (!index || joueur.points !== joueurs[index - 1].points) rang = index + 1;
     const ligne = document.createElement('div');
     ligne.className = 'row';
-    const total = indicateur === 'moyenne'
-      ? `${Number(joueur.moyenne).toLocaleString('fr-FR')} / 10 · ${joueur.notes_recues} note(s)`
-      : `${joueur[indicateur]}`;
-    ligne.append(elementHistorique('span', `${rang}. ${joueur.prenom || 'Joueur'}`),
-      elementHistorique('strong', total));
+    ligne.append(elementHistorique('span', rang + '. ' + joueur.prenom),
+      elementHistorique('strong', joueur.points + (joueur.points > 1 ? ' pts' : ' pt')));
     zone.append(ligne);
   });
 }
@@ -214,7 +205,7 @@ function initialiserHistoriqueFive() {
   const notes = document.querySelector('#notes-five');
   if (['homme-du-match','palmares'].includes(classement?.dataset.classement)) {
     afficherPodium(classement);
-  } else if (classement) rpcHistorique('classements_five').then(data => afficherClassementReel(classement, data))
+  } else if (classement) rpcHistorique('points_resultats_five').then(data => afficherClassementReel(classement, data))
     .catch(() => { classement.textContent = 'Classement temporairement indisponible.'; });
   if (cartons) rpcHistorique('cartons_five').then(data => afficherCartonsReels(cartons, data))
     .catch(() => { cartons.textContent = 'Historique des cartons temporairement indisponible.'; });
