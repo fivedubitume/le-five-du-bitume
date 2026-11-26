@@ -7,181 +7,88 @@ function initialiserVoteFive() {
   const carte = document.querySelector('#vote-five');
   if (!carte || carte.dataset.initialise) return;
   carte.dataset.initialise = 'true';
+  carte.insertAdjacentHTML('beforeend', `
+    <label hidden data-match>Choisis le Five<select></select></label>
+    <p data-date></p><p data-compte></p>
+    <form hidden><label>Ton numéro d’inscription<input required type="tel" autocomplete="tel"></label>
+    <label>Ton homme du match<select required></select></label>
+    <button class="btn">Valider mon vote</button></form>
+    <p role="status" tabindex="-1"></p>`);
+  const filtre = carte.querySelector('[data-match]');
+  const selection = filtre.querySelector('select');
+  const date = carte.querySelector('[data-date]');
+  const compte = carte.querySelector('[data-compte]');
+  const form = carte.querySelector('form');
+  const joueurs = form.querySelector('select');
+  const numero = form.querySelector('input');
+  const bouton = form.querySelector('button');
+  const message = carte.querySelector('[role=status]');
+  const recus = new Map();
+  let matchs = [], decalage = 0, derniereListe = '', enLecture = false;
+  const libelle = m => new Date(m.debut).toLocaleString('fr-FR',{dateStyle:'long',timeStyle:'short',timeZone:'Europe/Paris'}) + ' · ' + (m.lieu || 'Five');
 
-  const date = document.createElement('p');
-  const compte = document.createElement('p');
-  const action = document.createElement('button');
-  action.type = 'button';
-  action.className = 'btn';
-  action.textContent = 'Voter';
-  action.hidden = true;
-  const message = document.createElement('p');
-  message.setAttribute('role', 'status');
-  const choix = document.createElement('form');
-  choix.hidden = true;
-  const label = document.createElement('label');
-  label.textContent = 'Choisis un joueur';
-  const candidats = document.createElement('select');
-  candidats.required = true;
-  label.append(candidats);
-  const envoyer = document.createElement('button');
-  envoyer.className = 'btn';
-  envoyer.textContent = 'Valider mon vote';
-  const numero = document.createElement('input');
-  numero.type = 'tel';
-  numero.autocomplete = 'tel';
-  numero.required = true;
-  const identite = document.createElement('label');
-  identite.textContent = 'Ton numéro de téléphone utilisé à l’inscription';
-  identite.append(numero);
-  choix.append(identite, label, envoyer);
-  carte.append(date, compte, action, choix, message);
-
-  let match;
-  let decalage = 0;
-  let termine = false;
-
-  function actualiserCompte() {
-    if (!match) return;
-    const maintenant = Date.now() + decalage;
-    const attente = maintenant < Date.parse(match.debut);
-    const cible = Date.parse(attente ? match.debut : match.cloture);
-    const secondes = Math.max(0, Math.ceil((cible - maintenant) / 1000));
-    const ouvert = !attente && secondes > 0;
-    action.hidden = !ouvert || termine || !choix.hidden;
-    if (!ouvert) choix.hidden = true;
-    const texteAttente = 'Le match n’a pas encore commencé. Tu pourras élire l’homme du match dès le coup d’envoi.';
-    if (attente) {
-      message.textContent = texteAttente;
-    } else if (message.textContent === texteAttente) {
-      message.textContent = '';
+  function afficher() {
+    const m = matchs.find(item => item.id === selection.value);
+    if (!m) { form.hidden=true; date.textContent='Aucun Five publié.'; compte.textContent=''; return; }
+    const debut = Date.parse(m.debut);
+    const maintenant = Date.now()+decalage;
+    const attente = maintenant<debut;
+    const secondes = Math.max(0,Math.ceil(((attente?debut:debut+48*3600000)-maintenant)/1000));
+    date.textContent = libelle(m);
+    compte.textContent = secondes ? (attente?'Ouverture':'Clôture')+' du vote dans '+Math.floor(secondes/3600)+' h '+Math.floor(secondes%3600/60)+' min '+secondes%60+' s' : 'Vote terminé.';
+    form.hidden = attente || !secondes || recus.has(m.id) || !m.candidats.length;
+    const liste = JSON.stringify([m.id,m.candidats]);
+    if (liste !== derniereListe) {
+      const ancien = joueurs.value;
+      joueurs.replaceChildren(new Option('Choisis un joueur',''),...m.candidats.map(j=>new Option(j.prenom,j.id)));
+      joueurs.value = m.candidats.some(j=>j.id===ancien)?ancien:'';
+      derniereListe=liste;
     }
-    if (secondes === 0) {
-      compte.textContent = 'Vote terminé';
-      return;
-    }
-    const heures = Math.floor(secondes / 3600);
-    const minutes = String(Math.floor(secondes / 60) % 60).padStart(2, '0');
-    const reste = String(secondes % 60).padStart(2, '0');
-    compte.textContent = `${attente ? 'Ouverture du vote' : 'Clôture du vote'} dans ${heures} h ${minutes} min ${reste} s`;
   }
-
-  async function appeler(candidat = null) {
-    const maintenant = Date.now() + decalage;
-    if (!match || maintenant < Date.parse(match.debut) || maintenant >= Date.parse(match.cloture)) {
-      throw new Error('Le vote est fermé pour ce Five.');
-    }
-    const { data: { session }, error: erreurSession } = await clientVoteFive.auth.getSession();
-    if (erreurSession) throw erreurSession;
-    if (!session) throw new Error('Ouvre le site dans le navigateur utilisé pour réserver ta place.');
-    const { data, error } = await clientVoteFive.rpc('vote_homme_du_match', {
-      p_match_id: match.match_id, p_candidat_id: candidat
-    });
-    if (error) throw error;
-    return data;
-  }
-
-  function afficherConfirmation(statut) {
-    termine = true;
-    choix.hidden = true;
-    action.hidden = true;
-    message.classList.add('vote-recu');
-    message.textContent = statut === 'enregistre'
-      ? '✓ Ton vote a été validé ! Ta voix compte pour ce Five.'
-      : '✓ Tu as déjà voté. Ta voix est comptabilisée pour ce Five.';
-    message.tabIndex = -1;
-    message.focus();
-  }
-
-  action.addEventListener('click', async () => {
-    action.disabled = true;
-    message.textContent = '';
+  async function charger() {
+    if(enLecture) return;
+    enLecture=true;
     try {
-      const resultat = await appeler();
-      if (resultat.statut === 'deja_vote') {
-        afficherConfirmation(resultat.statut);
-        return;
-      }
-      if (!resultat.candidats.length) {
-        message.textContent = 'Aucun joueur disponible pour le vote.';
-        return;
-      }
-      candidats.replaceChildren(new Option('Sélectionner un joueur', ''),
-        ...resultat.candidats.map(joueur => new Option(joueur.prenom, joueur.id)));
-      choix.hidden = false;
-      actualiserCompte();
-      if (!choix.hidden) numero.focus();
-    } catch (erreur) {
-      message.textContent = erreur.message || 'Impossible d’ouvrir le vote.';
-    } finally {
-      action.disabled = false;
-    }
-  });
-
-  choix.addEventListener('submit', async event => {
-    event.preventDefault();
-    envoyer.disabled = true;
-    message.textContent = '';
-    try {
-      message.classList.remove('vote-recu');
-      message.textContent = 'Enregistrement du vote…';
-      const id = match.match_id;
-      const { data: resultat, error } = await clientVoteFive.rpc('valider_vote_bitume', {
-        p_match: id, p_candidat: candidats.value, p_numero: normaliserTelephoneFive(numero.value)
-      });
-      if (match?.match_id !== id) return;
-      if (error) throw error;
-      if (!['enregistre', 'deja_vote'].includes(resultat?.statut))
-        throw new Error('Le serveur n’a pas confirmé ton vote. Réessaie.');
-      afficherConfirmation(resultat.statut);
-    } catch (erreur) {
-      message.textContent = erreur.message || 'Impossible d’enregistrer le vote.';
-    } finally {
-      envoyer.disabled = false;
-    }
-  });
-
-  async function chargerCalendrier() {
-    try {
-      if (!clientVoteFive) throw new Error('Calendrier indisponible.');
-      const { data, error } = await clientVoteFive.rpc('calendrier_vote_five');
-      if (error) throw error;
-      const prochain = data[0];
-      if (prochain?.match_id !== match?.match_id) {
-        message.classList.remove('vote-recu');
-        termine = false;
-        choix.hidden = true;
-        message.textContent = '';
-      }
-      match = prochain;
-      if (!match) {
-        date.textContent = 'Aucun Five publié.';
-        compte.textContent = '';
-        action.hidden = true;
-        return;
-      }
-      decalage = Date.parse(match.heure_serveur) - Date.now();
-      date.textContent = new Intl.DateTimeFormat('fr-FR', {
-        dateStyle: 'full', timeStyle: 'short', timeZone: 'Europe/Paris'
-      }).format(new Date(match.debut));
-      actualiserCompte();
-    } catch {
-      if (!match) date.textContent = 'Calendrier du vote indisponible.';
-    }
+      const data=await rpcHistorique('scrutins_five');
+      const precedent=selection.value;
+      matchs=data;
+      if(data.length) decalage=Date.parse(data[0].serveur)-Date.now();
+      selection.replaceChildren(...data.map(m=>new Option(libelle(m),m.id)));
+      if(data.some(m=>m.id===precedent)) selection.value=precedent;
+      if(selection.value!==precedent) changer(); else afficher();
+      filtre.hidden=data.length<2;
+    } catch { if(!matchs.length) compte.textContent='Calendrier temporairement indisponible.'; }
+    finally { enLecture=false; }
   }
-
-  chargerCalendrier();
-  const horloge = setInterval(() => {
-    if (!carte.isConnected) {
-      clearInterval(horloge);
-      clearInterval(calendrier);
-      return;
-    }
-    actualiserCompte();
-  }, 1000);
-  const calendrier = setInterval(chargerCalendrier, 60000);
+  function changer() {
+    numero.value='';
+    message.textContent=recus.get(selection.value)||'';
+    message.classList.toggle('vote-recu',recus.has(selection.value));
+    afficher();
+  }
+  selection.onchange=changer;
+  form.onsubmit=async e=>{
+    e.preventDefault();
+    const id=selection.value;
+    if(bouton.disabled) return;
+    bouton.disabled=selection.disabled=true;
+    message.textContent='Enregistrement du vote…';
+    try {
+      const statut=await rpcHistorique('deposer_voix_five',{p_match:id,p_numero:normaliserTelephoneFive(numero.value),p_candidat:joueurs.value});
+      if(!['enregistre','deja_vote'].includes(statut)) throw new Error('Vote non confirmé.');
+      recus.set(id,statut==='enregistre'?'✓ Ton vote a été validé !':'✓ Un vote a déjà été enregistré pour ce numéro sur ce match.');
+      if(selection.value===id){changer();message.focus();}
+    } catch(err) {message.textContent=err.message;}
+    finally {bouton.disabled=selection.disabled=false;}
+  };
+  // Les scripts différés suivants fournissent rpcHistorique avant cet appel.
+  setTimeout(charger,0);
+  const lecture=setInterval(charger,30000);
+  const horloge=setInterval(()=>{
+    if(!carte.isConnected){clearInterval(lecture);clearInterval(horloge);return;}
+    if(matchs.length) afficher();
+  },1000);
 }
-
 initialiserVoteFive();
-window.addEventListener('hashchange', initialiserVoteFive);
-window.addEventListener('pageshow', initialiserVoteFive);
+window.addEventListener('hashchange',initialiserVoteFive);
+window.addEventListener('pageshow',initialiserVoteFive);

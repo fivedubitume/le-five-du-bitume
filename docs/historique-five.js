@@ -147,7 +147,31 @@ function initialiserHistoriqueFive() {
   const classement = document.querySelector('#historique-five');
   const cartons = document.querySelector('#cartons-five');
   const notes = document.querySelector('#notes-five');
-  if (classement) rpcHistorique('classements_five').then(data => afficherClassementReel(classement, data))
+  if (classement?.dataset.classement === 'homme-du-match') {
+    const voix = document.createElement('div');
+    const titres = document.createElement('div');
+    titres.dataset.classement = 'homme-du-match';
+    classement.replaceChildren(elementHistorique('h3','Voix reçues depuis le premier Five'), voix,
+      elementHistorique('h3','Titres d’homme du match'), titres);
+    const actualiser = async () => {
+      if (!classement.isConnected) return;
+      try {
+        const joueurs = await rpcHistorique('voix_homme_du_match');
+        const lignes = joueurs.map(j => {
+          const ligne = elementHistorique('p','');
+          ligne.className = 'row';
+          const rang = joueurs.findIndex(item => item.voix === j.voix) + 1;
+          ligne.append(elementHistorique('span',rang+'. '+j.prenom),elementHistorique('strong',j.voix+' voix'));
+          return ligne;
+        });
+        voix.replaceChildren(...(lignes.length ? lignes : ['Aucune voix enregistrée.']));
+      } catch { voix.textContent = 'Total des voix temporairement indisponible.'; }
+    };
+    actualiser();
+    const horloge = setInterval(() => classement.isConnected ? actualiser() : clearInterval(horloge),15000);
+    rpcHistorique('classements_five').then(data => afficherClassementReel(titres,data))
+      .catch(() => { titres.textContent='Titres temporairement indisponibles.'; });
+  } else if (classement) rpcHistorique('classements_five').then(data => afficherClassementReel(classement, data))
     .catch(() => { classement.textContent = 'Classement temporairement indisponible.'; });
   if (cartons) rpcHistorique('cartons_five').then(data => afficherCartonsReels(cartons, data))
     .catch(() => { cartons.textContent = 'Historique des cartons temporairement indisponible.'; });
