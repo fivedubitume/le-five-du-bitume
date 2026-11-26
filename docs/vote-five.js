@@ -50,11 +50,22 @@ function initialiserVoteFive() {
     enLecture=true;
     try {
       const data=await rpcHistorique('scrutins_five');
+      const cible = location.hash.startsWith('#vote/') ? location.hash.slice(6) : '';
       const precedent=selection.value;
       matchs=data;
       if(data.length) decalage=Date.parse(data[0].serveur)-Date.now();
       selection.replaceChildren(...data.map(m=>new Option(libelle(m),m.id)));
-      if(data.some(m=>m.id===precedent)) selection.value=precedent;
+      if (cible) {
+        selection.value = cible;
+        if (!selection.value) {
+          form.hidden = true;
+          filtre.hidden = true;
+          date.textContent = 'Le vote de ce Five est terminé ou indisponible.';
+          compte.textContent = '';
+          matchs = [];
+          return;
+        }
+      } else if(data.some(m=>m.id===precedent)) selection.value=precedent;
       if(selection.value!==precedent) changer(); else afficher();
       filtre.hidden=data.length<2;
     } catch { if(!matchs.length) compte.textContent='Calendrier temporairement indisponible.'; }
@@ -66,7 +77,10 @@ function initialiserVoteFive() {
     message.classList.toggle('vote-recu',recus.has(selection.value));
     afficher();
   }
-  selection.onchange=changer;
+  selection.onchange=() => {
+    if (location.hash.startsWith('#vote/')) location.hash = 'vote/' + selection.value;
+    else changer();
+  };
   form.onsubmit=async e=>{
     e.preventDefault();
     const id=selection.value;
@@ -105,27 +119,33 @@ function initialiserVotesAccueil() {
     const lignes = ouverts.map(m => {
       const minutes = Math.ceil((Date.parse(m.fin) - maintenant) / 60000);
       const lien = document.createElement('a');
-      lien.href = '#vote';
+      lien.href = '#vote/' + m.id;
       const date = new Date(m.debut).toLocaleString('fr-FR', {
-        timeZone: 'Europe/Paris', dateStyle: 'short', timeStyle: 'short'
+        timeZone: 'Europe/Paris', dateStyle: 'full', timeStyle: 'short'
       });
-      lien.textContent = date + ' · ' + (m.lieu || 'Five') + ' · Fin du vote dans ' +
-        Math.floor(minutes / 60) + ' h ' + String(minutes % 60).padStart(2, '0') + ' min';
+      const titre = document.createElement('strong');
+      titre.textContent = 'Vote pour l’homme du match';
+      const details = document.createElement('span');
+      details.textContent = date + (m.lieu ? ' · ' + m.lieu : '');
+      const delai = document.createElement('small');
+      delai.textContent = 'Fin dans ' + Math.floor(minutes / 60) + ' h ' + String(minutes % 60).padStart(2, '0') + ' min';
+      const action = document.createElement('b');
+      action.textContent = 'Voter →';
+      lien.append(titre, details, delai, action);
       return lien;
     });
-    const titre = document.createElement('strong');
-    titre.textContent = 'Vote pour l’homme du match';
-    const contenu = [titre, ...lignes];
-    if (section.textContent !== contenu.map(el => el.textContent).join(''))
-      section.replaceChildren(...contenu);
+    if (section.textContent !== lignes.map(el => el.textContent).join('') ||
+        lignes.some((el, i) => el.href !== section.children[i]?.href))
+      section.replaceChildren(...lignes);
   }
   async function charger() {
     if (chargement || !section.isConnected) return;
     chargement = true;
     try {
-      const liste = await rpcHistorique('podium_matchs_five');
+      const liste = await rpcHistorique('scrutins_five');
       if (liste.length) decalage = Date.parse(liste[0].serveur) - Date.now();
-      matchs = liste;
+      matchs = liste.filter(m => Date.parse(m.debut) <= Date.parse(m.serveur))
+        .map(m => ({ ...m, fin: new Date(Date.parse(m.debut) + 24 * 3600000).toISOString() }));
       afficher();
     } catch { afficher(); }
     finally { chargement = false; }
