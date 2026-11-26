@@ -19,17 +19,37 @@ async function rpcHistorique(nom, argumentsRpc = {}, token) {
 }
 
 function afficherClassementReel(zone, joueurs) {
-  zone.replaceChildren(elementHistorique('p', 'Victoire · 3 pts　 Nul · 1 pt　 Défaite · 0 pt'));
-  if (!joueurs.length) zone.append(elementHistorique('p', 'En attente du premier résultat.'));
-  let rang = 0;
-  joueurs.forEach((joueur, index) => {
-    if (!index || joueur.points !== joueurs[index - 1].points) rang = index + 1;
-    const ligne = document.createElement('div');
-    ligne.className = 'row';
-    ligne.append(elementHistorique('span', rang + '. ' + joueur.prenom),
-      elementHistorique('strong', joueur.points + (joueur.points > 1 ? ' pts' : ' pt')));
-    zone.append(ligne);
+  zone.replaceChildren();
+  if (!joueurs.length) {
+    zone.textContent = 'En attente du premier résultat.';
+    return;
+  }
+  const ordre = [...joueurs].sort((a,b) => b.points - a.points ||
+    a.prenom.localeCompare(b.prenom, 'fr', {sensitivity:'base'}));
+  const tableau = document.createElement('table');
+  tableau.className = 'table-points';
+  tableau.setAttribute('aria-label','Classement des joueurs par points');
+  const entete = tableau.createTHead().insertRow();
+  for (const nom of ['Rang','Joueur','Pts']) {
+    const cellule = elementHistorique('th',nom);
+    cellule.scope = 'col';
+    entete.append(cellule);
+  }
+  const corps = tableau.createTBody();
+  ordre.forEach((joueur,index) => {
+    const ligne = corps.insertRow();
+    ligne.classList.toggle('en-tete',joueur.points === ordre[0].points);
+    ligne.insertCell().textContent = index + 1;
+    const nom = ligne.insertCell();
+    const maillot = document.createElement('img');
+    maillot.src = 'maillot-bitume.png';
+    maillot.alt = '';
+    nom.append(maillot, document.createTextNode(joueur.prenom));
+    ligne.insertCell().textContent = joueur.points;
   });
+  const bareme = elementHistorique('p','Victoire 3 pts · Nul 1 pt · Défaite 0 pt');
+  bareme.className = 'bareme-points';
+  zone.append(tableau,bareme);
 }
 
 function afficherCartonsReels(zone, cartons) {
