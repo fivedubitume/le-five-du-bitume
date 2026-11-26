@@ -64,3 +64,9 @@
 #votes-accueil small { color:#d3ff80; font-variant-numeric:tabular-nums; }
 #votes-accueil b { justify-self:start; background:#cafa61; color:#142011; border-radius:.6rem; padding:.65rem 1.15rem; }
 #votes-accueil a:focus-visible { outline:3px solid #cafa61; outline-offset:3px; }
+
+#cartons-five:has(.col-carton){display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:clamp(.3rem,1vw,.9rem);padding:0;background:transparent;border:0}
+.col-carton{min-width:0;padding:clamp(.4rem,1.7vw,1rem);border-radius:.7rem;background:#19261e;border-top:5px solid #fafaf0;overflow-wrap:anywhere}
+.col-carton.jaune{border-color:#ffd343}.col-carton.rouge{border-color:#fc544f}
+.col-carton h2{font-size:clamp(.98rem,3.8vw,1.4rem);margin:0 0 .7rem}.col-carton article{padding:.65rem 0;border-top:1px solid #445148}
+.col-carton article p{margin:.3rem 0;line-height:1.35}.col-carton small{color:#c2cdbf}

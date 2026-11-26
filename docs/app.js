@@ -73,8 +73,8 @@ function reglesDuGroupe() {
           <h3>Cartons</h3>
           <p>Le même barème s’applique à tout le monde, pour que les décisions soient claires et équitables.</p>
           <ul class="regles-cartons">
-            <li class="regles-carton-blanc"><strong>Carton blanc</strong> — Désistement moins de 48 heures avant le coup d’envoi.</li>
-            <li class="regles-carton-jaune"><strong>Carton jaune</strong> — Retard de plus de 10 minutes le jour du Five.</li>
+            <li class="regles-carton-blanc"><strong>Carton blanc</strong> — Désistement moins de 48 heures avant le coup d’envoi ou retard de plus de 10 minutes le jour du Five.</li>
+            <li class="regles-carton-jaune"><strong>Carton jaune</strong> — En cas de nouvel incident après un carton blanc.</li>
             <li class="regles-carton-rouge"><strong>Carton rouge</strong> — Absence au Five alors que la place était confirmée.</li>
           </ul>
           <p>En cas de nouvel incident, on passe du blanc au jaune, puis du jaune au rouge. Un carton rouge entraîne l’exclusion du groupe.</p>
@@ -156,7 +156,7 @@ function render() {
     regles: reglesDuGroupe,
     classements: afficherClassements,
     vote: () => '<section class="card" id="vote-five"><header class="vote-bandeau"><img src="trophee-bitume.webp" alt="Un joueur du Bitume reçoit le trophée de son coéquipier" width="1280" height="720" decoding="async"><h1>Vote pour l’homme du match</h1></header></section><section class="card section" id="notes-five"><h2>Noter les joueurs</h2></section>',
-    cartons: () => '<header class="vote-bandeau"><img src="arbitre-bitume.webp" alt="Un arbitre brandit un carton rouge sur un terrain de Five" width="1280" height="720" decoding="async"><h1>Les cartons des joueurs</h1></header><section class="card section" id="cartons-five">Chargement…</section>'
+    cartons: () => '<header class="vote-bandeau"><img src="cartons-vestiaire.webp?v=bras-leve" alt="Le numéro 5 du Bitume rejoint le vestiaire après un carton rouge" width="1280" height="720" decoding="async"><h1>Les cartons des joueurs</h1></header><section class="card section" id="cartons-five">Chargement…</section>'
   };
   const page = Object.hasOwn(pages, route) ? route : 'accueil';
   document.querySelectorAll('header nav a').forEach(lien => {

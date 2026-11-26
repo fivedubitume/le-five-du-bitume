@@ -332,11 +332,16 @@ function afficherGestionAdmin(token) {
     const couleur = document.createElement('select');
     couleur.append(...['blanc', 'jaune', 'rouge'].map(item => new Option(item, item)));
     const { form, valider } = formulaireHistorique('Carton sur ce Five', 'Ajouter le carton', async () => {
-      await historiqueAction('carton', match.id, { joueur: joueur.value, couleur: couleur.value });
+      await historiqueRpc('ajouter_carton_motive', { p_match: match.id, p_joueur: joueur.value, p_couleur: couleur.value, p_motif: motif.value.trim() });
+      motif.value = '';
       await chargerCartonsParFive();
     });
     ajouterChamp(form, 'Joueur', joueur);
     ajouterChamp(form, 'Couleur du carton', couleur);
+    const motif = document.createElement('input');
+    motif.required = true;
+    motif.maxLength = 180;
+    ajouterChamp(form, 'Motif affiché aux joueurs', motif);
     form.append(valider);
     espaceResultat.append(form);
   }

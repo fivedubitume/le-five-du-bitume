@@ -34,15 +34,19 @@ function afficherClassementReel(zone, joueurs) {
 
 function afficherCartonsReels(zone, cartons) {
   zone.replaceChildren();
-  if (!cartons.length) zone.textContent = 'Aucun carton enregistré.';
-  let jourCourant = '';
-  for (const carton of cartons) {
-    const jour = dateHistorique.format(new Date(carton.date_match));
-    if (jour !== jourCourant) zone.append(elementHistorique('h2', jour));
-    jourCourant = jour;
-    const ligne = elementHistorique('p', `${carton.prenom} · Carton ${carton.couleur}`);
-    ligne.className = 'row';
-    zone.append(ligne);
+  for (const couleur of ['blanc','jaune','rouge']) {
+    const colonne = document.createElement('section');
+    colonne.className = 'col-carton ' + couleur;
+    colonne.append(elementHistorique('h2', couleur[0].toUpperCase()+couleur.slice(1)));
+    const sanctions = cartons.filter(c => c.couleur === couleur);
+    for (const c of sanctions) {
+      const fiche = document.createElement('article');
+      fiche.append(elementHistorique('strong',c.prenom),elementHistorique('p',c.motif || 'Motif non renseigné'),
+        elementHistorique('small',dateHistorique.format(new Date(c.date_match))));
+      colonne.append(fiche);
+    }
+    if (!sanctions.length) colonne.append(elementHistorique('small','Aucun carton'));
+    zone.append(colonne);
   }
 }
 
@@ -207,7 +211,7 @@ function initialiserHistoriqueFive() {
     afficherPodium(classement);
   } else if (classement) rpcHistorique('points_resultats_five').then(data => afficherClassementReel(classement, data))
     .catch(() => { classement.textContent = 'Classement temporairement indisponible.'; });
-  if (cartons) rpcHistorique('cartons_five').then(data => afficherCartonsReels(cartons, data))
+  if (cartons) rpcHistorique('cartons_avec_motif').then(data => afficherCartonsReels(cartons, data))
     .catch(() => { cartons.textContent = 'Historique des cartons temporairement indisponible.'; });
   if (notes && !notes.dataset.initialise) {
     notes.dataset.initialise = 'true';
