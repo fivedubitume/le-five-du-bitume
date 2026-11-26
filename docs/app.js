@@ -146,7 +146,7 @@ function afficherClassements(categorie) {
   const liens = criteres.map(critere =>
     `<a class="btn ${critere === actif ? '' : 'alt'}" href="#classements/${critere.id}"${critere === actif ? ' aria-current="page"' : ''}>${critere.nom}</a>`
   ).join('');
-  return `<section class="classements-ensemble"><div class="classements-bandeau"><h1>Classements</h1><div class="actions classements-filtres" role="group" aria-label="Filtres du classement">${liens}</div></div><section class="card classements-resultats"><h2>${actif.nom}</h2><div id="historique-five" data-classement="${actif.id}">Chargement…</div></section></section>`;
+  return `<section class="classements-ensemble"><div class="classements-bandeau"><h1>Classements</h1><div class="actions classements-filtres" role="group" aria-label="Filtres du classement">${liens}</div></div><section class="card classements-resultats">${actif.id === 'homme-du-match' ? '' : '<h2>'+actif.nom+'</h2>'}<div id="historique-five" data-classement="${actif.id}">Chargement…</div></section></section>`;
 }
 
 function render() {

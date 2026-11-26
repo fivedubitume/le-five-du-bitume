@@ -53,3 +53,23 @@
   border-radius: 0;
   background: transparent;
 }
+
+.podium-horloge {
+  display:grid; gap:.2rem; padding:clamp(14px,4vw,26px);
+  border:1px solid #48593c; border-radius:12px;
+  background:linear-gradient(115deg,#243524,#111b15 78%);
+}
+.podium-horloge span { font-weight:700; color:#e4eada; }
+.podium-horloge strong { font-size:clamp(1.8rem,7vw,3rem); line-height:1.1; letter-spacing:-.04em; color:#cefa65; font-variant-numeric:tabular-nums; overflow-wrap:anywhere; }
+.podium-horloge small { color:#c0cfbc; }
+#historique-five [data-titre] { font-size:clamp(1rem,4.5vw,1.45rem); margin:1.2rem 0 .6rem; }
+.podium-liste { list-style:none; padding:0; margin:0; }
+.podium-liste li { display:grid; grid-template-columns:2rem minmax(0,1fr) auto; align-items:center; gap:.45rem; padding:.72rem .65rem; border-bottom:1px solid #344137; }
+.podium-liste li strong { overflow-wrap:anywhere; }
+.podium-liste li b { color:#cefa65; font-variant-numeric:tabular-nums; }
+.podium-liste li span { color:#acbba9; text-align:center; font-weight:700; }
+.podium-liste .podium-premier { border-inline-start:3px solid #dcb76c; background:#242c20; border-radius:6px; }
+.podium-liste .podium-premier span { color:#e8c985; }
+.podium-cumul { margin-top:1.3rem; border-top:1px solid #344137; }
+.podium-cumul summary { cursor:pointer; font-weight:700; padding:.85rem 0; }
+#historique-five p:empty { display:none; }

@@ -143,34 +143,82 @@ async function afficherNotesFive(zone) {
   }
 }
 
+function lignesPodium(joueurs) {
+  let rang = 0;
+  return joueurs.map((joueur, index) => {
+    if (!index || joueur.voix !== joueurs[index - 1].voix) rang = index + 1;
+    const ligne = elementHistorique('li', '');
+    ligne.className = rang === 1 ? 'podium-premier' : '';
+    ligne.append(elementHistorique('span', String(rang)), elementHistorique('strong', joueur.prenom),
+      elementHistorique('b', joueur.voix + ' voix'));
+    return ligne;
+  });
+}
+
+function afficherPodium(zone) {
+  zone.innerHTML = `<label data-filtre hidden>Match<select></select></label>
+    <p data-info role="status">Chargement…</p>
+    <div data-podium hidden><div class="podium-horloge"><span data-legende></span>
+    <strong data-valeur></strong><small data-date></small></div>
+    <h2 data-titre></h2><ol class="podium-liste" data-rangs></ol><p data-vide></p></div>
+    <details class="podium-cumul" open><summary>Votes cumulés</summary><ol class="podium-liste"></ol><p></p></details>`;
+  const champ = zone.querySelector('select');
+  const trouver = nom => zone.querySelector('[data-'+nom+']');
+  const cumul = zone.querySelector('details');
+  const format = new Intl.DateTimeFormat('fr-FR',{day:'numeric',month:'short',hour:'2-digit',minute:'2-digit',timeZone:'Europe/Paris'});
+  const libelle = m => format.format(new Date(m.debut)) + (m.lieu ? ' · '+m.lieu : '');
+  let matchs = [], decalage = 0, enCours = false;
+  function montrer() {
+    const m = matchs.find(item=>item.id===champ.value);
+    trouver('podium').hidden = !m;
+    if (!m) return;
+    const minutes = Math.max(0,Math.ceil((Date.parse(m.fin)-Date.now()-decalage)/60000));
+    const gagnants = m.joueurs.filter(j=>j.voix===m.joueurs[0]?.voix);
+    trouver('legende').textContent = minutes ? 'Fin des votes' : gagnants.length>1 ? 'Hommes du match · ex æquo' : gagnants.length ? 'Homme du match' : 'Vote terminé';
+    trouver('valeur').textContent = minutes ? Math.floor(minutes/60)+' h '+String(minutes%60).padStart(2,'0')+' min'
+      : gagnants.map(j=>j.prenom).join(' & ') || 'Aucun vote';
+    trouver('date').textContent = libelle(m);
+    trouver('titre').textContent = minutes ? 'Classement provisoire du match' : 'Classement final du match';
+    trouver('rangs').replaceChildren(...lignesPodium(m.joueurs));
+    trouver('vide').textContent = minutes && !m.joueurs.length ? 'En attente du premier vote.' : '';
+  }
+  async function actualiser() {
+    if (enCours) return;
+    enCours=true;
+    try {
+      await Promise.all([
+        rpcHistorique('podium_matchs_five').then(data=>{
+          const precedent=champ.value;
+          matchs=data;
+          if(data.length) decalage=Date.parse(data[0].serveur)-Date.now();
+          if (JSON.stringify(data.map(libelle))!==champ.dataset.libelles || data.map(m=>m.id).join(',')!==champ.dataset.ids) {
+            champ.replaceChildren(...data.map(m=>new Option(libelle(m),m.id)));
+            champ.dataset.libelles=JSON.stringify(data.map(libelle));
+            champ.dataset.ids=data.map(m=>m.id).join(',');
+            if(data.some(m=>m.id===precedent)) champ.value=precedent;
+          }
+          trouver('filtre').hidden=data.length<2;
+          trouver('info').textContent=data.length?'':'Le classement apparaîtra au premier coup d’envoi.';
+          montrer();
+        }).catch(()=>{trouver('info').textContent='Actualisation du match indisponible.';}),
+        rpcHistorique('voix_homme_du_match').then(joueurs=>{
+          cumul.querySelector('ol').replaceChildren(...lignesPodium(joueurs));
+          cumul.querySelector('p').textContent=joueurs.length?'':'Aucune voix enregistrée.';
+        }).catch(()=>{cumul.querySelector('p').textContent='Actualisation des votes cumulés indisponible.';})
+      ]);
+    } finally {enCours=false;}
+  }
+  champ.onchange=montrer;
+  actualiser();
+  const suivi=setInterval(()=>{if(!zone.isConnected) clearInterval(suivi); else if(!document.hidden) actualiser();},15000);
+}
+
 function initialiserHistoriqueFive() {
   const classement = document.querySelector('#historique-five');
   const cartons = document.querySelector('#cartons-five');
   const notes = document.querySelector('#notes-five');
   if (classement?.dataset.classement === 'homme-du-match') {
-    const voix = document.createElement('div');
-    const titres = document.createElement('div');
-    titres.dataset.classement = 'homme-du-match';
-    classement.replaceChildren(elementHistorique('h3','Voix reçues depuis le premier Five'), voix,
-      elementHistorique('h3','Titres d’homme du match'), titres);
-    const actualiser = async () => {
-      if (!classement.isConnected) return;
-      try {
-        const joueurs = await rpcHistorique('voix_homme_du_match');
-        const lignes = joueurs.map(j => {
-          const ligne = elementHistorique('p','');
-          ligne.className = 'row';
-          const rang = joueurs.findIndex(item => item.voix === j.voix) + 1;
-          ligne.append(elementHistorique('span',rang+'. '+j.prenom),elementHistorique('strong',j.voix+' voix'));
-          return ligne;
-        });
-        voix.replaceChildren(...(lignes.length ? lignes : ['Aucune voix enregistrée.']));
-      } catch { voix.textContent = 'Total des voix temporairement indisponible.'; }
-    };
-    actualiser();
-    const horloge = setInterval(() => classement.isConnected ? actualiser() : clearInterval(horloge),15000);
-    rpcHistorique('classements_five').then(data => afficherClassementReel(titres,data))
-      .catch(() => { titres.textContent='Titres temporairement indisponibles.'; });
+    afficherPodium(classement);
   } else if (classement) rpcHistorique('classements_five').then(data => afficherClassementReel(classement, data))
     .catch(() => { classement.textContent = 'Classement temporairement indisponible.'; });
   if (cartons) rpcHistorique('cartons_five').then(data => afficherCartonsReels(cartons, data))
