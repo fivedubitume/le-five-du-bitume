@@ -49,18 +49,18 @@
   font-weight: 700;
 }
 
-#votes-accueil:not([hidden]) { display: grid; gap: .75rem; margin-bottom: 1.25rem; }
+#votes-accueil:not([hidden]) { display:grid; gap:.75rem; margin:0 0 1.6rem; }
 #votes-accueil a {
-  display: grid;
-  gap: .4rem;
-  padding: 1rem;
-  color: #f9fbea;
-  background: linear-gradient(110deg, #223b28, #121e16);
-  border: 1px solid #566e50;
-  border-inline-start: 4px solid #cafa61;
-  border-radius: 14px;
-  text-decoration: none;
+  display:grid; grid-template-columns:auto 1fr; align-items:center; gap:.55rem .7rem;
+  padding:clamp(1rem,4vw,2rem); color:#fafbf3; text-decoration:none;
+  border-radius:18px; overflow:hidden; border:1px solid #465b47;
+  background:linear-gradient(90deg,rgba(9,19,14,.92),rgba(9,19,14,.18)),
+    linear-gradient(0deg,#101b14 4%,transparent 82%),url('trophee-bitume.webp') center 42% / cover;
 }
-#votes-accueil a strong { font-size: 1.25rem; }
-#votes-accueil a b { justify-self: start; color: #152013; background: #cafa61; padding: .4rem .9rem; border-radius: .5rem; }
-#votes-accueil a:focus-visible { outline: 3px solid #cafa61; outline-offset: 2px; }
+#votes-accueil img { width:2.6rem; height:2.6rem; object-fit:contain; }
+#votes-accueil .statut-scrutin { color:#d3ff80; font-size:.78rem; font-weight:800; text-transform:uppercase; letter-spacing:.09em; }
+#votes-accueil strong, #votes-accueil small, #votes-accueil span:not(.statut-scrutin), #votes-accueil b { grid-column:1/-1; }
+#votes-accueil strong { margin-top:1rem; font-size:clamp(1.65rem,5vw,2.8rem); line-height:1.05; }
+#votes-accueil small { color:#d3ff80; font-variant-numeric:tabular-nums; }
+#votes-accueil b { justify-self:start; background:#cafa61; color:#142011; border-radius:.6rem; padding:.65rem 1.15rem; }
+#votes-accueil a:focus-visible { outline:3px solid #cafa61; outline-offset:3px; }

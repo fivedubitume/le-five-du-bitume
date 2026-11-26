@@ -124,14 +124,20 @@ function initialiserVotesAccueil() {
         timeZone: 'Europe/Paris', dateStyle: 'full', timeStyle: 'short'
       });
       const titre = document.createElement('strong');
-      titre.textContent = 'Vote pour l’homme du match';
+      titre.textContent = 'Homme du match';
       const details = document.createElement('span');
       details.textContent = date + (m.lieu ? ' · ' + m.lieu : '');
       const delai = document.createElement('small');
       delai.textContent = 'Fin dans ' + Math.floor(minutes / 60) + ' h ' + String(minutes % 60).padStart(2, '0') + ' min';
       const action = document.createElement('b');
-      action.textContent = 'Voter →';
-      lien.append(titre, details, delai, action);
+      action.textContent = 'Je vote →';
+      const logo = document.createElement('img');
+      logo.src = 'logo.PNG';
+      logo.alt = '';
+      const statut = document.createElement('span');
+      statut.className = 'statut-scrutin';
+      statut.textContent = 'Vote ouvert';
+      lien.append(logo, statut, titre, details, delai, action);
       return lien;
     });
     if (section.textContent !== lignes.map(el => el.textContent).join('') ||
